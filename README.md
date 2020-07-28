@@ -1,1 +1,1 @@
-# grasping-benchmarks-
+# grasping-benchmarks-panda
