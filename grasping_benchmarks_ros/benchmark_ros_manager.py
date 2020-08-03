@@ -65,9 +65,9 @@ class GraspingBenchmarksManager(object):
         # --- panda service --- #
         panda_service_name =  "/panda_grasp"
         rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
-        # rospy.wait_for_service(panda_service_name, timeout=60.0)
-        # self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
-        # rospy.loginfo("...Connected with service {}".format(panda_service_name))
+        rospy.wait_for_service(panda_service_name, timeout=60.0)
+        self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
+        rospy.loginfo("...Connected with service {}".format(panda_service_name))
 
         # --- subscribers to camera topics --- #
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
@@ -185,7 +185,7 @@ class GraspingBenchmarksManager(object):
                 rospy.loginfo("grasp execution was aborted by the user")
                 return Bool(False)
 
-            return Bool(True) # self.execute_grasp(reply.grasp, self._camera_pose)
+            return self.execute_grasp(reply.grasp, self._camera_pose)
 
         elif req.cmd.data == "abort":
             self._abort = True
