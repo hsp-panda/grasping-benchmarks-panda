@@ -160,7 +160,10 @@ It is the main actor of the framework, connecting the different modules and send
   - `/camera/aligned_depth_to_color/image_raw`: aligned depth
   - `/camera/depth_registered/points`: point cloud
 
-  It also reads the camera pose wrt the robot base that should be part of the TF ROS tree.
+  It also reads the camera pose wrt the robot base that should be part of the TF ROS tree.This pose can be publish on ros tof with the following command:
+      ```bash
+      $ rosrun tf static_transform_publisher 0.047 -0.03496 -0.08288 0.008 -1.506 3.14 /panda_EE /camera_link 50
+      ```
 
 2. It receives also a few commands from a user through a `user_cmd_service`. Available commands are:
   - `help`: list of available commands
@@ -181,6 +184,7 @@ It is the main actor of the framework, connecting the different modules and send
 
 1. Run the service to control the panda:
       ```bashrc
+      $ roslaunch panda_moveit_config panda_control_moveit_rviz.launch load_gripper:=true robot_ip:=172.16.0.2
       $ rosrun panda_simple_grasp_service simple_action_server.py
       ```
 
