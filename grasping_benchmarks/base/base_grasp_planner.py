@@ -8,7 +8,6 @@ import os
 import time
 
 import numpy as np
-import rospy
 from grasping_benchmarks.base.grasp import Grasp6D
 
 class CameraData:

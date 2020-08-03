@@ -25,4 +25,6 @@ setuptools.setup(
     author_email="elena.rampone@iit.it",
     packages=setuptools.find_packages(),
     package_data={'grasping_benchmarks': need_files},
+    python_requires='>=3',
+    install_requires=['scipy', 'numpy', 'pyyaml'],
 )
