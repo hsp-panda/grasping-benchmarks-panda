@@ -3,8 +3,8 @@
 This repository contains a framework to benchmark different robotic grasp planning algorithms with the [Franka Emika Panda](https://www.franka.de/) under a common interface. It is designed to work with both a simulated and a real robot.
 
 It is composed of 3 main modules:
-- [**grasping_benchmarks**](/grasping_benchmarks): a python package that provides the base interface for the grasp planners and a class for each supported algorithm.
-- [**grasping_benchmarks_ros**](/grasping_benchmarks_ros): a ROS-based framework that allows to benchmark the grasp planners on the robotic platform.
+- [**grasping_benchmarks**](./grasping_benchmarks): a python package that provides the base interface for the grasp planners and a class for each supported algorithm.
+- [**grasping_benchmarks_ros**](./grasping_benchmarks_ros): a ROS-based framework that allows to benchmark the grasp planners on the robotic platform.
 - [**docker**](/docker): a collection of docker images, one for each supported grasp planner, that include i) the algorithm software and its dependencies, ii) the grasping_benchmarks_ros, iii) the Panda control service server.
 
 The wrapped grasp planners available so far are:
@@ -117,14 +117,14 @@ These images are intended to provide additional features to the images compiled 
 
   To create a unique image, you can use *docker-compose*. An example script is provided in [/docker/build_images/docker-compose.yaml](/docker/build_images/docker-compose.yaml).
 
-## Grasping Benchmark Description
+## Grasping Benchmarks Description
 The grasping benchmark python package follows the structure shown in the figure below.
 
 <p align="center">
   <img src="images/python_package.JPG" width="600">
 </p>
 
-The code of the interface is inside the folder [base/](/base). It provides:
+The code of the interface is inside the folder [base/](./base). It provides:
 - **BaseGraspPlanner**: the base image that should be inherited by the `<algorithm>GraspPlanner` classes. The principal feature of this class is the `plan_grasp()` method, which takes as input an object of type `CameraData` and returns the grasp pose as an object of type `Grasp6D`.
 - **CameraData**: a class that needs to be filled with the camera data necessary to compute a grasp candidate.
 - **Grasp6D**: a class that contains the info of the grasp candidate computed by the algorithm.
@@ -166,9 +166,9 @@ It is the main actor of the framework, connecting the different modules and send
 3. It connects with the algorithm service server. It sends the camera data and receives the candidate grasp.
 
   The service type implemented by the algorithm service server should chosen among the standard services provided, depending on the type of data required by the grasp planning algorithm:
-  - [GraspPlanner.srv](srv/grasping_benchmarks_ros/srv/GraspPlanner.srv)
-  - [GraspPlannerCloud.srv](srv/grasping_benchmarks_ros/srv/GraspPlannerCloud.srv)
+  - [GraspPlanner.srv](./grasping_benchmarks_ros/srv/GraspPlanner.srv)
+  - [GraspPlannerCloud.srv](./grasping_benchmarks_ros/srv/GraspPlannerCloud.srv)
 
-  Each service returns a [msg/BenchmarkGrasp.msg](grasping_benchmarks_ros/msg/BenchmarkGrasp.msg).
+  Each service returns a [msg/BenchmarkGrasp.msg](./grasping_benchmarks_ros/msg/BenchmarkGrasp.msg).
 
 4. Finally it connects with the Panda Control service server. It sends the grasp pose as a `geometry_msgs/PoseStamped` message. The Panda Control service server executes the grasp and return the failure/succes of the grasp.
