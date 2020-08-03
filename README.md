@@ -180,27 +180,26 @@ It is the main actor of the framework, connecting the different modules and send
 ### How to Run
 
 1. Run the service to control the panda:
-  ```bashrc
-  $ rosrun panda_simple_grasp_service simple_action_server.py
-  ```
+      ```bashrc
+      $ rosrun panda_simple_grasp_service simple_action_server.py
+      ```
 
-  User messages can be sent to service `/PandaGraspServer/user_cmd`. For example, to move the robot in home position:
-  ```bashrc
-  $ rosservice call /PandaGraspServer/user_cmd "cmd: data: 'go_home'"
-  ```
-2. Run the benchmarks framework. We can launch its launch file by specific the name of the algorithm to benchmark:
+      User messages can be sent to service `/PandaGraspServer/user_cmd`. For example, to move the robot in home position:
+      ```bashrc
+      $ rosservice call /PandaGraspServer/user_cmd "cmd: data: 'go_home'"
+      ```
+2. Run the benchmarks framework. We can launch its launch file by specifying the name of the algorithm to benchmark:
+      ```bashrc
+      $ roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch realsense:=true <target>:=true
+      ```
 
-  ```bashrc
-  $ roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch realsense:=true <target>:=true
-  ```
+      | targets |
+      | ------- |
+      | dexnet |
+      | gpd |
+      | superquadric |
 
-  | targets |
-  | ------- |
-  | dexnet |
-  | gpd |
-  | superquadric |
-
-  User messages can be sent to service `/<algo>_bench/user_cmd`. For example:
-  ```bashrc
-  $ rosservice call /dexnet_bench/user_cmd "cmd: data: 'grasp'"
-  ```
+      User messages can be sent to service `/<algo>_bench/user_cmd`. For example:
+      ```bashrc
+      $ rosservice call /dexnet_bench/user_cmd "cmd: data: 'grasp'"
+      ```
