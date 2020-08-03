@@ -1,0 +1,5 @@
+# request
+std_msgs/String cmd
+---
+# response
+bool success

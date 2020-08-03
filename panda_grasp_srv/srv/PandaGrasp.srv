@@ -1,0 +1,6 @@
+# request
+geometry_msgs/PoseStamped grasp
+std_msgs/Float32 width # Required aperture (opening width) of the robot hand
+---
+# response
+bool success
