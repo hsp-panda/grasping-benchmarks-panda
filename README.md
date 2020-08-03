@@ -14,17 +14,17 @@ The wrapped grasp planners available so far are:
 
 ## Overview
 - [Installation](#installation)
-    - [grasping_benchmarks](#installation-grasping-benchmarks)
-    - [grasping_benchmarks_ros](#installation-grasping-benchmarks-ros)
-    - [docker](#installation-docker)
+     - [grasping_benchmarks](#grasping-benchmarks)
+     - [grasping_benchmarks_ros](#grasping-benchmarks-ros)
+     - [docker](#docker)
 - [Grasping Benchmarks Description](#grasping-benchmarks-description)
 - [Grasping Benchmarks Ros Description](#grasping-benchmarks-ros-description)
-    - [How to Run](#how-to-run)
+     - [How to Run](#how-to-run)
 ---
 
 ## Installation
 The installation have to be done with **Python3**.
-### grasping_benchmarks only
+### grasping_benchmarks
 Follow these instruction if you want to install only the python package without the ROS framework.
 
 1. Clone the repository:
