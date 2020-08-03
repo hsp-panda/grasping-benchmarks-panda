@@ -3,9 +3,9 @@
 This repository contains a framework to benchmark different robotic grasp planning algorithms with the [Franka Emika Panda](https://www.franka.de/) under a common interface. It is designed to work with both a simulated and a real robot.
 
 It is composed of 3 main modules:
-- [**grasping_benchmarks**](./grasping_benchmarks): a python package that provides the base interface for the grasp planners and a class for each supported algorithm.
-- [**grasping_benchmarks_ros**](./grasping_benchmarks_ros): a ROS-based framework that allows to benchmark the grasp planners on the robotic platform.
-- [**docker**](/docker): a collection of docker images, one for each supported grasp planner, that include i) the algorithm software and its dependencies, ii) the grasping_benchmarks_ros, iii) the Panda control service server.
+- [grasping_benchmarks only](./grasping_benchmarks): a python package that provides the base interface for the grasp planners and a class for each supported algorithm.
+- [grasping_benchmarks_ros](./grasping_benchmarks_ros): a ROS-based framework that allows to benchmark the grasp planners on the robotic platform.
+- [docker](./docker): a collection of docker images, one for each supported grasp planner, that include i) the algorithm software and its dependencies, ii) the grasping_benchmarks_ros, iii) the Panda control service server.
 
 The wrapped grasp planners available so far are:
 - **Dexnet**: [documentation](https://berkeleyautomation.github.io/dex-net/), [paper](https://arxiv.org/pdf/1703.09312.pdf)
@@ -14,13 +14,17 @@ The wrapped grasp planners available so far are:
 
 ## Overview
 - [Installation](#installation)
+    - [grasping_benchmarks](#installation-grasping-benchmarks)
+    - [grasping_benchmarks_ros](#installation-grasping-benchmarks-ros)
+    - [docker](#installation-docker)
 - [Grasping Benchmarks Description](#grasping-benchmarks-description)
 - [Grasping Benchmarks Ros Description](#grasping-benchmarks-ros-description)
+    - [How to Run](#how-to-run)
 ---
 
 ## Installation
 The installation have to be done with **Python3**.
-### *grasping_benchmarks* only
+### grasping_benchmarks only
 Follow these instruction if you want to install only the python package without the ROS framework.
 
 1. Clone the repository:
@@ -41,7 +45,7 @@ Follow these instruction if you want to install only the python package without 
   help(grasping_benchmarks)
   ```
 
-## **grasping_benchmarks_ros** package
+### grasping_benchmarks_ros
 Follow these instructions if you want to install also the ROS framework. To install and use this module, you need to include it in a *catkin workspace*.
 
 1. Install python3 ROS packages:
@@ -92,7 +96,7 @@ Follow these instructions if you want to install also the ROS framework. To inst
   $ echo 'source ~/catkin_ws/devel/setup.bash' >> ~/.bashrc
   ```
 
-## docker
+### docker
 You can build the docker image for the specific algorithm you want to use by doing:
 1. Clone the repository:
   ```bash
@@ -112,10 +116,10 @@ You can build the docker image for the specific algorithm you want to use by doi
   | superquadric |
   | 6dgraspnet |
 
-3. [Optional] There are also two additional docker images that can be built, one with development tools such as qtcreator and atom ([tools/](/docker/tools)) and another one with the Franka Panda libraries such as franka-ros and moveit ([panda_deps/](/docker/panda_deps)).
+3. [Optional] There are also two additional docker images that can be built, one with development tools such as qtcreator and atom ([tools/](./docker/tools)) and another one with the Franka Panda libraries such as franka-ros and moveit ([panda_deps/](./docker/panda_deps)).
 These images are intended to provide additional features to the images compiled at point 2.
 
-  To create a unique image, you can use *docker-compose*. An example script is provided in [/docker/build_images/docker-compose.yaml](/docker/build_images/docker-compose.yaml).
+  To create a unique image, you can use *docker-compose*. An example script is provided in [/docker/build_images/docker-compose.yaml](./docker/build_images/docker-compose.yaml).
 
 ## Grasping Benchmarks Description
 The grasping benchmark python package follows the structure shown in the figure below.
@@ -165,17 +169,29 @@ It is the main actor of the framework, connecting the different modules and send
 
 3. It connects with the algorithm service server. It sends the camera data and receives the candidate grasp.
 
-  The service type implemented by the algorithm service server should chosen among the standard services provided, depending on the type of data required by the grasp planning algorithm:
-  - [GraspPlanner.srv](./grasping_benchmarks_ros/srv/GraspPlanner.srv)
-  - [GraspPlannerCloud.srv](./grasping_benchmarks_ros/srv/GraspPlannerCloud.srv)
+    The service type implemented by the algorithm service server should chosen among the standard services provided, depending on the type of data required by the grasp planning algorithm:
+    - [GraspPlanner.srv](./grasping_benchmarks_ros/srv/GraspPlanner.srv)
+    - [GraspPlannerCloud.srv](./grasping_benchmarks_ros/srv/GraspPlannerCloud.srv)
 
-  Each service returns a [msg/BenchmarkGrasp.msg](./grasping_benchmarks_ros/msg/BenchmarkGrasp.msg).
+    Each service returns a [msg/BenchmarkGrasp.msg](./grasping_benchmarks_ros/msg/BenchmarkGrasp.msg).
 
 4. Finally it connects with the Panda Control service server. It sends the grasp pose as a `geometry_msgs/PoseStamped` message. The Panda Control service server executes the grasp and return the failure/succes of the grasp.
 
 ### How to Run
 
-To run the application we can launch its launch file:
+1. Run the service to control the panda:
+  ```bashrc
+  $ rosrun panda_simple_grasp_service simple_action_server.py
+  ```
+
+2. Run the benchmarks framework. We can launch its launch file by specific the name of the algorithm to benchmark:
+
 ```bashrc
-$ roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch  
+$ roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch realsense:=true <target>:=true
 ```
+
+| targets |
+| ------- |
+| dexnet |
+| gpd |
+| superquadric |
