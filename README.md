@@ -172,3 +172,10 @@ It is the main actor of the framework, connecting the different modules and send
   Each service returns a [msg/BenchmarkGrasp.msg](./grasping_benchmarks_ros/msg/BenchmarkGrasp.msg).
 
 4. Finally it connects with the Panda Control service server. It sends the grasp pose as a `geometry_msgs/PoseStamped` message. The Panda Control service server executes the grasp and return the failure/succes of the grasp.
+
+### How to Run
+
+To run the application we can launch its launch file:
+```bashrc
+$ roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch  
+```
