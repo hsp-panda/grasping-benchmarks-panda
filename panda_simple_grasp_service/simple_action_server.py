@@ -59,7 +59,7 @@ class PandaGraspServer(object):
         self._scene.remove_world_object()
 
         # --- User input service --- #
-        self._cmd_srv = rospy.Service("PandaGraspServer/cmd", UserCmd, self.user_cmd)
+        self._cmd_srv = rospy.Service("PandaGraspServer/user_cmd", UserCmd, self.user_cmd)
 
         # --- configure ROS service server --- #
         self._grasp_service = rospy.Service(service_name, PandaGrasp,
