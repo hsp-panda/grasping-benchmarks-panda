@@ -3,7 +3,7 @@
 This repository contains a framework to benchmark different robotic grasp planning algorithms with the [Franka Emika Panda](https://www.franka.de/) under a common interface. It is designed to work with both a simulated and a real robot.
 
 It is composed of 3 main modules:
-- [grasping_benchmarks only](./grasping_benchmarks): a python package that provides the base interface for the grasp planners and a class for each supported algorithm.
+- [grasping_benchmarks](./grasping_benchmarks): a python package that provides the base interface for the grasp planners and a class for each supported algorithm.
 - [grasping_benchmarks_ros](./grasping_benchmarks_ros): a ROS-based framework that allows to benchmark the grasp planners on the robotic platform.
 - [docker](./docker): a collection of docker images, one for each supported grasp planner, that include i) the algorithm software and its dependencies, ii) the grasping_benchmarks_ros, iii) the Panda control service server.
 
@@ -14,9 +14,9 @@ The wrapped grasp planners available so far are:
 
 ## Overview
 - [Installation](#installation)
-     - [grasping_benchmarks](#grasping-benchmarks)
-     - [grasping_benchmarks_ros](#grasping-benchmarks-ros)
-     - [docker](#docker)
+    - [grasping benchmarks](#grasping-benchmarks)
+    - [grasping benchmarks ros](#grasping-benchmarks-ros)
+    - [docker](#docker)
 - [Grasping Benchmarks Description](#grasping-benchmarks-description)
 - [Grasping Benchmarks Ros Description](#grasping-benchmarks-ros-description)
      - [How to Run](#how-to-run)
@@ -24,7 +24,7 @@ The wrapped grasp planners available so far are:
 
 ## Installation
 The installation have to be done with **Python3**.
-### grasping_benchmarks
+### grasping benchmarks
 Follow these instruction if you want to install only the python package without the ROS framework.
 
 1. Clone the repository:
@@ -45,7 +45,7 @@ Follow these instruction if you want to install only the python package without 
   help(grasping_benchmarks)
   ```
 
-### grasping_benchmarks_ros
+### grasping benchmarks ros
 Follow these instructions if you want to install also the ROS framework. To install and use this module, you need to include it in a *catkin workspace*.
 
 1. Install python3 ROS packages:
