@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Colors, colors, colors
+if [ $UID -ne 0 ]; then
+	PS1='${debian_chroot:+($debian_chroot)}\[\e[36;1m\]\u\[\e[0m\]@\H:\[\e[30;1m\]\w\[\e[0m\]\[\e[00;36m\]$(__git_ps1 " (%s)")\[\e[36;1m\]>\[\e[0m\]\[\e[1m\] '
+else
+	PS1='${debian_chroot:+($debian_chroot)}\[\e[31;1m\]\u\[\e[0m\]@\H:\[\e[30;1m\]\w\[\e[31;1m\]#\[\e[0m\]\[\e[1m\] '
+fi
+
+# Reset PS1 color before command's output
+trap 'echo -ne "\e[0m"' DEBUG
+
+# Case insensitive filename completion
+shopt -s nocaseglob
+
+# Autocorrect simple typos
+shopt -s cdspell
+shopt -s dirspell direxpand
+
+# Bash won't get SIGWINCH if another process is in the foreground.
+# Enable checkwinsize so that bash will check the terminal size when
+# it regains control.  #65623
+# http://cnswww.cns.cwru.edu/~chet/bash/FAQ (E11)
+shopt -s checkwinsize
+
+# Disable completion when the input buffer is empty.  i.e. Hitting tab
+# and waiting a long time for bash to expand all of $PATH.
+shopt -s no_empty_cmd_completion
+
+# History handling
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
+shopt -s histappend
+PROMPT_COMMAND="history -a ; $PROMPT_COMMAND"
+
+# Mappings for Ctrl-left-arrow and Ctrl-right-arrow for words navigation
+bind '"\e[1;5C": forward-word'
+bind '"\e[1;5D": backward-word'
+bind '"\e[5C": forward-word'
+bind '"\e[5D": backward-word'
+bind '"\e\e[C": forward-word'
+bind '"\e\e[D": backward-word'
+
+# Explicitly enable gcc colored output
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'

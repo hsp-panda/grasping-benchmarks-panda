@@ -1,0 +1,5 @@
+# request params
+std_msgs/String cmd # options: 'grasp'
+---
+# response params
+std_msgs/Bool is_success

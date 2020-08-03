@@ -1,0 +1,31 @@
+version: '3.0'
+
+services:
+
+  superquadric_based:
+    # build:
+    #   args:
+    #     from: nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+    #   context: ./superquadric_based/
+    #   dockerfile: Dockerfile
+    image: eleramp/superquadric_grasp_planner:latest
+
+  deps:
+    depends_on:
+      - superquadric_based
+    build:
+      args:
+        from: eleramp/superquadric_grasp_planner:latest
+      context: ./tools/
+      dockerfile: Dockerfile
+    image: eleramp/superquadric_based_full:latest
+
+  panda:
+      depends_on:
+        - deps
+      build:
+        args:
+          from: eleramp/superquadric_based_full:latest
+        context: ./panda_deps/
+        dockerfile: Dockerfile
+      image: eleramp/superquadric_tools_panda:latest

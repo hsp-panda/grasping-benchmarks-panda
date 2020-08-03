@@ -1,0 +1,7 @@
+# request params
+sensor_msgs/PointCloud2 cloud
+# The camera pose at which the point cloud was acquired. Default: 0.0 0.0 0.0
+geometry_msgs/Pose view_point
+---
+# response params
+BenchmarkGrasp grasp
