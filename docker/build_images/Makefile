@@ -7,20 +7,20 @@ $(error USER_NAME not defined)
 endif
 
 dexnet:
-	docker build --rm \
+	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
 	    --build-arg from=nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 \
 	    --tag $(USER_NAME)/benchmark_dexnet:latest \
 	    ../dexnet/
 
 gpd:
-	docker build --rm \
+	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
 	    --build-arg from=nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 \
 	    --tag $(USER_NAME)/benchmark_gpd:latest \
 	    ../gpd/
 
-superquadric:
-	docker build --rm \
-	    --build-arg from=nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 \
+superquadrics:
+	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
+		--build-arg from=nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 \
 	    --tag $(USER_NAME)/benchmark_superquadrics:latest \
 	    ../superquadrics_based/
 

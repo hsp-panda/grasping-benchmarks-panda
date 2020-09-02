@@ -58,7 +58,7 @@ class GraspingBenchmarksManager(object):
         self._grasp_planner_srv = GRASP_PLANNER_SRV[grasp_planner_service]
 
         rospy.loginfo("GraspingBenchmarksManager: Waiting for grasp planner service...")
-        rospy.wait_for_service(grasp_planner_service_name, timeout=10.0)
+        rospy.wait_for_service(grasp_planner_service_name, timeout=30.0)
         self._grasp_planner = rospy.ServiceProxy(grasp_planner_service_name, self._grasp_planner_srv)
         rospy.loginfo("...Connected with service {}".format(grasp_planner_service_name))
 

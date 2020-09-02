@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:experimental
+
 ARG from=ubuntu:bionic
 FROM ${from}
 
@@ -33,12 +35,14 @@ RUN apt-get update &&\
 
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - && \
     apt-add-repository "deb https://apt.kitware.com/ubuntu/ `lsb_release -cs` main" &&\
+    add-apt-repository ppa:ubuntu-toolchain-r/test &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends \
         gcc-8 \
         g++-8 \
         cmake \
         cmake-curses-gui \
+        build-essential \
         &&\
     rm -rf /var/lib/apt/lists/*
 
@@ -113,14 +117,52 @@ ENV WS_SOURCES=${WS_DIR}/sources
 ARG WS_BIN=${WS_SOURCES}/bin
 
 # Create a new runtimeusers group
-RUN groupadd -K GID_MIN=900 -K GID_MAX=1100 runtimeusers
+RUN groupadd -K GID_MIN=900 -K GID_MAX=1100 runtimeusers 
 
-# Install Dexnet
+
+# Install Dexnet dependencies
+# ===========================
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-opengl \
+    python3-tk \
+    &&\
+    mkdir -p ${WS_SOURCES} && cd ${WS_SOURCES} &&\
+    curl -L http://download.osgeo.org/libspatialindex/spatialindex-src-1.8.5.tar.gz | tar xz &&\
+    cd spatialindex-src-1.8.5 &&\
+    ./configure &&\
+    make &&\
+    make install &&\
+    ldconfig &&\
+    rm -rf spatialindex-src-1.8.5 && \
+    pip3 install \
+    numpy \
+    scipy \
+    matplotlib \
+    tensorflow==1.14.0 \
+    scikit-build \
+    scikit-learn \
+    scikit-image \
+    gputil \
+    psutil \
+    opencv-python \
+    autolab-core \
+    autolab-perception \
+    visualization \
+    &&\
+    rm -rf /var/lib/apt/lists/* 
+
+
+# Install GQCNN
 # ==============
-RUN mkdir -p ${WS_SOURCES} && cd ${WS_SOURCES} &&\
+RUN cd ${WS_SOURCES} &&\
     git clone https://github.com/BerkeleyAutomation/gqcnn.git &&\
-    pip3 install gqcnn/ &&\
-    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    cd gqcnn/ &&\
+    chmod +x scripts/downloads/models/download_models.sh &&\
+    ./scripts/downloads/models/download_models.sh &&\
+    pip3 install gqcnn/  &&\
+    find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Create catkin_ws with dependencies/ros packages for python3
 # ===========================================================
@@ -139,11 +181,12 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 
 # Install benchmark-grasping
 # ==========================
-RUN cd ${CATKIN_WS_DIR} &&\
-    wstool set -y src/grasping-benchmarks-panda --git https://github.com/robotology/grasping-benchmarks-panda &&\
-    wstool up &&\
-    cd src/grasping-benchmarks-panda &&\
-    pip3 install -e grasping_benchmarks &&\
+
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+RUN --mount=type=ssh cd ${CATKIN_WS_DIR}/src &&\
+    git clone git@github.com:robotology/grasping-benchmarks-panda.git &&\
+    pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF && \
     catkin build  -j8 && \
@@ -153,7 +196,7 @@ RUN cd ${CATKIN_WS_DIR} &&\
 # FIX OWNERSHIP
 # =============
 RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Nvidia runtime support
 ENV NVIDIA_VISIBLE_DEVICES=all

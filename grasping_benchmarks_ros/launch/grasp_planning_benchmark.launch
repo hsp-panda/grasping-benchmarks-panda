@@ -21,7 +21,7 @@
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
 
     <arg name="model_name"                        default="GQCNN-4.0-PJ" />
-    <arg name="model_dir"                         default="/home/icub/workspace/gqcnn/models" />
+    <arg name="model_dir"                         default="/workspace/sources/gqcnn/models" />
     <arg name="fully_conv"                        default="False" />
 
     <node name="dexnet_grasp_planner"  pkg="grasping_benchmarks_ros" type="dexnet_grasp_planner_service.py" ns="$(arg ns)" output="screen" >
@@ -84,7 +84,7 @@
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
     <arg name="config_file"                       default="$(find grasping_benchmarks_ros)/superquadric_based_ros/cfg/config_panda.yaml" />
 
-    <node name="$(arg grasp_planner_node_name)"  pkg="grasping_benchmarks_ros"  type="superq_grasp_planner_server.py" ns="$(arg ns)" output="screen" >
+    <node name="$(arg grasp_planner_node_name)"  pkg="grasping_benchmarks_ros"  type="superq_grasp_planner_service.py" ns="$(arg ns)" output="screen" >
       <param name="grasp_planner_service_name"          value="$(arg grasp_planner_service_name)" />
       <param name="grasp_publisher_name"                value="$(arg grasp_publisher_name)" />
       <param name="config_file"                         value="$(arg config_file)" />

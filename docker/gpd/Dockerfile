@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:experimental
+
 ARG from=ubuntu:bionic
 FROM ${from}
 
@@ -37,13 +39,14 @@ RUN apt-get update &&\
 
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - && \
     apt-add-repository "deb https://apt.kitware.com/ubuntu/ `lsb_release -cs` main" &&\
-    add-apt-repository “deb http://security.ubuntu.com/ubuntu xenial-security main” &&\
+    add-apt-repository ppa:ubuntu-toolchain-r/test &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends --fix-missing\
         gcc-8 \
         g++-8 \
         cmake \
         cmake-curses-gui \
+        build-essential \
         mc \
         lynx \
         libqhull* \
@@ -145,22 +148,22 @@ RUN groupadd -K GID_MIN=900 -K GID_MAX=1100 runtimeusers
 # =============
 RUN mkdir -p ${WS_SOURCES} &&\
     cd ${WS_SOURCES} &&\
-    && git clone -b tags/3.2.0 https://github.com/eigenteam/eigen-git-mirror eigen \
-    && cd eigen \
-    && mkdir build \
-    && cd build \
-    && cmake  -D CMAKE_INSTALL_PREFIX=${WS_INSTALL} .. \
-    && make -j8 \
-    && make install \
-    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ && \
-    && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    git clone -b 3.2 https://gitlab.com/libeigen/eigen.git eigen &&\
+    cd eigen &&\
+    mkdir build &&\
+    cd build &&\
+    cmake  -D CMAKE_INSTALL_PREFIX=${WS_INSTALL} .. &&\
+    make -j8 &&\
+    make install &&\
+    find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
+    find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Install VTK
 # ============
 RUN apt-get update &&\
-    apt-get install -y --no-install-recommends\
-    libvtk7-* &&\
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y\
+    libvtk7* &&\
+    rm -rf /var/lib/apt/lists/* 
 
 # Install PCL
 # ===========
@@ -170,10 +173,10 @@ RUN cd ${WS_SOURCES}\
     && cd pcl-pcl-1.9.0 \
     && mkdir build \
     && cd build \
-    && cmake -D CMAKE_BUILD_TYPE=None -D BUILD_GPU=ON -D BUILD_apps=ON -D BUILD_examples=ON  -DCMAKE_INSTALL_PREFIX=${WS_INSTALL}.. \
-    && make -j 8 \
+    && cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_GPU=ON -D BUILD_apps=ON -D BUILD_examples=ON  -DCMAKE_INSTALL_PREFIX=${WS_INSTALL} .. \
+    && make -j8 \
     && make install \
-    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ && \
+    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
     && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Install Opencv
@@ -187,7 +190,7 @@ RUN cd ${WS_SOURCES}\
     && cmake -D WITH_OPENMP=ON -D ENABLE_PRECOMPILED_HEADERS=OFF  -DCMAKE_INSTALL_PREFIX=${WS_INSTALL} ..\
     && make -j 8 \
     && make install \
-    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ && \
+    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
     && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Install CAFFE
@@ -220,7 +223,7 @@ RUN apt-get update &&\
         ../ \
     && make -j 8 \
     && make install \
-    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ && \
+    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
     && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Install gpd
@@ -235,12 +238,14 @@ RUN cd ${WS_SOURCES}\
         -D USE_CAFFE=ON \
         .. \
     && make -j8  \
-    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ && \
+    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
     && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Create catkin_ws with dependencies/ros packages for python3
 # ===========================================================
-RUN mkdir -p ${CATKIN_WS_DIR}/src && \
+RUN apt-get update &&\
+    sudo apt-get install -y libboost-all-dev &&\
+    mkdir -p ${CATKIN_WS_DIR}/src && \
     cd ${CATKIN_WS_DIR} &&\
     wstool init &&\
     wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
@@ -255,21 +260,25 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 
 # Install benchmark-grasping
 # ==========================
-RUN cd ${CATKIN_WS_DIR} &&\
-    wstool set -y src/grasping-benchmarks-panda --git https://github.com/robotology/grasping-benchmarks-panda &&\
-    wstool up &&\
-    cd src/grasping-benchmarks-panda &&\
-    pip3 install -e grasping_benchmarks &&\
+
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+RUN --mount=type=ssh cd ${CATKIN_WS_DIR}/src &&\
+    git clone git@github.com:robotology/grasping-benchmarks-panda.git &&\
+    pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=ON && \
     catkin build  -j8 && \
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
+
 # =============
 # FIX OWNERSHIP
 # =============
+
 RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ 
 
 # Nvidia runtime support
 ENV NVIDIA_VISIBLE_DEVICES=all
@@ -277,6 +286,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all
 
 # Image initialization
 # ====================
+
 ENV USERNAME=docker
 
 # Include a custom bashrc

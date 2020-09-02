@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:experimental
+
 ARG from=ubuntu:bionic
 FROM ${from}
 
@@ -24,6 +26,7 @@ RUN apt-get update &&\
         bash-completion \
         gdb \
         ssh \
+        openssh-client \
         iputils-ping \
         gnupg \
         gnupg2 \
@@ -33,12 +36,14 @@ RUN apt-get update &&\
 
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - && \
     apt-add-repository "deb https://apt.kitware.com/ubuntu/ `lsb_release -cs` main" &&\
+    add-apt-repository ppa:ubuntu-toolchain-r/test &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends \
         gcc-8 \
         g++-8 \
         cmake \
         cmake-curses-gui \
+        build-essential \
         &&\
     rm -rf /var/lib/apt/lists/*
 
@@ -56,7 +61,7 @@ RUN apt-get update &&\
 
 
 # Install python 3
-# ==============
+# ================
 ENV PYTHON_VERSION=3.6
 RUN add-apt-repository ppa:deadsnakes/ppa &&\
     apt-get update &&\
@@ -105,7 +110,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
     echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /etc/bash.bashrc
 
 
-# Install superquadric-lib and its dependencies: VTK, ipopt, SWIG
+# Install superquadric-lib and its dependencies (VTK, Ipopt, SWIG)
 # ===============================================================
 
 ENV WS_DIR=/workspace
@@ -160,7 +165,7 @@ RUN apt-get update &&\
     curl -o coinbrew https://raw.githubusercontent.com/coin-or/coinbrew/master/coinbrew &&\
     chmod +x coinbrew &&\
     ./coinbrew fetch Ipopt:releases/3.13.0 --no-prompt &&\
-    ./coinbrew build Ipopt --prefix=${WS_INSTALL} --no-prompt &&\
+    ./coinbrew build Ipopt --prefix=${WS_INSTALL} --test --no-prompt &&\
     ./coinbrew install Ipopt --no-prompt && \
     rm -rf ${WS_SOURCES}/ipopt_tmp
 
@@ -191,43 +196,47 @@ RUN mkdir ${WS_INSTALL}/include/coin/ &&\
 
 ENV PYTHONPATH=${PYTHONPATH}:${WS_INSTALL}/lib/superquadriclib/bindings
 
+
 # Create catkin_ws with dependencies/ros packages for python3
 # ===========================================================
 RUN apt-get update &&\
-    apt-get install -y --no-install-recommends pyyaml &&\
+    pip3 install pyyaml &&\
+    sudo apt-get install -y libboost-all-dev &&\
     mkdir -p ${CATKIN_WS_DIR}/src && \
     cd ${CATKIN_WS_DIR} &&\
     wstool init &&\
     wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
     wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
-    wstool set -y src/ros_numpy https://github.com/eric-wieser/ros_numpy &&\
+    wstool set -y src/ros_numpy --git https://github.com/eric-wieser/ros_numpy &&\
     wstool up &&\
     rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
     rm -rf /var/lib/apt/lists/* &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
     catkin build  -j8 && \
-    # add here benchmark-grasping folder
     echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Install benchmark-grasping
 # ==========================
-RUN cd ${CATKIN_WS_DIR} &&\
-    wstool set -y src/grasping-benchmarks-panda --git https://github.com/robotology/grasping-benchmarks-panda &&\
-    wstool up &&\
-    cd src/grasping-benchmarks-panda &&\
-    pip3 install -e grasping_benchmarks &&\
+
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+RUN --mount=type=ssh cd ${CATKIN_WS_DIR}/src &&\
+    git clone git@github.com:robotology/grasping-benchmarks-panda.git &&\
+    pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF && \
     catkin build  -j8 && \
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+
 
 # =============
 # FIX OWNERSHIP
 # =============
 
 RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Nvidia runtime support
 ENV NVIDIA_VISIBLE_DEVICES=all

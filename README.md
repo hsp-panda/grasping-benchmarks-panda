@@ -10,7 +10,7 @@ It is composed of 3 main modules:
 The wrapped grasp planners available so far are:
 - **Dexnet**: [documentation](https://berkeleyautomation.github.io/dex-net/), [paper](https://arxiv.org/pdf/1703.09312.pdf)
 - **GPD**: [documentation](https://github.com/atenpas/gpd), [paper](https://arxiv.org/pdf/1706.09911.pdf)
-- **Superquadric-based grasp planner**:  [documentation](https://github.com/robotology/superquadric-lib), [paper](http://lornat75.github.io/papers/2017/vezzani-icra.pdf)
+- **Superquadrics-based grasp planner**:  [documentation](https://github.com/robotology/superquadric-lib), [paper](http://lornat75.github.io/papers/2017/vezzani-icra.pdf)
 
 ## Overview
 - [Installation](#installation)
@@ -84,9 +84,13 @@ Follow these instructions if you want to install also the ROS framework. To inst
 6. Install the dependencies of the algorithm you want to benchmark. You can follow the instructions provided by the authors of each algorithm. The currently supported algorithms are:
   - **Dexnet**:You need to install [gqcnn](https://berkeleyautomation.github.io/gqcnn/)
   - **GPD**: Follow [gpd](https://github.com/atenpas/gpd)
-  - **Superquadric-based grasp planner**: Follow [superquadric-lib](https://github.com/robotology/superquadric-lib). Note that you need to compile the python bindings.
+  - **Superquadrics-based grasp planner**: Follow [superquadric-lib](https://github.com/robotology/superquadric-lib). Note that you need to compile the python bindings.
 
-7. Build the catkin workspace:
+7. You need to move and compile the [grasping-benchmarks-panda/panda_simple_grasp_service](./panda_simple_grasp_service) catkin package in a different catkin workspace, based on python2 and with [MoveIt](http://docs.ros.org/melodic/api/moveit_tutorials/html/index.html) installed. Copy also the [panda_grasp_srv](./panda_grasp_srv) in this different catkin workspace. 
+
+    **THE ONLY REASON WHY THE PACKAGE [panda_simple_grasp_service](./panda_simple_grasp_service) IS PLACED INSIDE THE grasping-benchmarks-panda IS THAT I DID NOT KNOW WHERE ELSE TO PUT IT ON GITHUB :) ONCE YOU WILL CREATE A DEDICATED REPOSITORY ON GITHUB FOR THE PANDA CONTROL FILES, YOU MAY CONSIDER TO MOVE panda_simple_grasp_service THERE**. 
+
+8. Build the catkin workspace:
   ```bash
   $ cd ~/catkin_ws
   # Set -DGPD_ROS=ON if you want to benchmark GPD
@@ -113,7 +117,7 @@ You can build the docker image for the specific algorithm you want to use by doi
   | ------- |
   | dexnet |
   | gpd |
-  | superquadric |
+  | superquadrics |
   | 6dgraspnet |
 
 3. [Optional] There are also two additional docker images that can be built, one with development tools such as qtcreator and atom ([tools/](./docker/tools)) and another one with the Franka Panda libraries such as franka-ros and moveit ([panda_deps/](./docker/panda_deps)).
@@ -182,17 +186,22 @@ It is the main actor of the framework, connecting the different modules and send
 
 ### How to Run
 
-1. Run the service to control the panda:
+1. Run the service to control the panda. 
       ```bashrc
       $ roslaunch panda_moveit_config panda_control_moveit_rviz.launch load_gripper:=true robot_ip:=172.16.0.2
       $ rosrun panda_simple_grasp_service simple_action_server.py
       ```
 
-      User messages can be sent to service `/PandaGraspServer/user_cmd`. For example, to move the robot in home position:
-      ```bashrc
-      $ rosservice call /PandaGraspServer/user_cmd "cmd: data: 'go_home'"
-      ```
-2. Run the benchmarks framework. We can launch its launch file by specifying the name of the algorithm to benchmark:
+      - User messages can be sent to service `/PandaGraspServer/user_cmd`. For example, to move the robot in home position:
+        ```bashrc
+        $ rosservice call /PandaGraspServer/user_cmd "cmd: data: 'go_home'"
+        ```
+      **NOTE: REMEBER TO MOVE AND COMPILE THE PACKAGE [panda_simple_grasp_service](./panda_simple_grasp_service) AND [panda_grasp_srv](./panda_grasp_srv) IN A DIFFERENT CATKIN WORKSPACE, BASED ON PYTHON2 AND WITH MOVEIT COMPILED.**
+
+2. Run the benchmarks framework. 
+    - You may need to set the correct paths to the models/config files in [grasping_benchmarks_ros/launch/grasp_planning_benchmark.launch](./grasping_benchmarks_ros/launch/grasp_planning_benchmark.launch)
+
+    - Execute the launch file by specifying the name of the algorithm to benchmark:
       ```bashrc
       $ roslaunch grasping_benchmarks_ros grasp_planning_benchmark.launch realsense:=true <target>:=true
       ```
@@ -201,9 +210,9 @@ It is the main actor of the framework, connecting the different modules and send
       | ------- |
       | dexnet |
       | gpd |
-      | superquadric |
+      | superquadrics |
 
-      User messages can be sent to service `/<algo>_bench/user_cmd`. For example:
+    - Send grasp commands to the service `/<target>_bench/user_cmd`. For example:
       ```bashrc
       $ rosservice call /dexnet_bench/user_cmd "cmd: data: 'grasp'"
       ```

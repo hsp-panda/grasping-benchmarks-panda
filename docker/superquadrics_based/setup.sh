@@ -17,6 +17,9 @@ if [[ $USER_GID = "1000" && $(stat -c "%g" $(pwd)) -ne 0 ]] ; then
     USER_GID=$(stat -c "%g" $(pwd))
 fi
 
+echo "USER_UID ${USER_UID}"
+echo "USER_GID ${USER_GID}"
+
 create_user() {
     # If the home folder exists, set a flag.
     # Creating the user during container initialization often is anticipated
@@ -76,6 +79,9 @@ if [[ $(id -u) -eq 0 && $(id -g) -eq 0 ]] ; then
 
     # Add the user to video group for HW acceleration (Intel GPUs)
     usermod -aG video ${USERNAME}
+
+    # Assign the user to the runtimeusers group
+    gpasswd -a ${USERNAME} runtimeusers
 fi
 
 # Setup the custom bashrc

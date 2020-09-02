@@ -1,6 +1,5 @@
 import os
 import setuptools
-from catkin_pkg.python_setup import generate_distutils_setup
 
 
 setup_py_dir = os.path.dirname(os.path.realpath(__file__))
