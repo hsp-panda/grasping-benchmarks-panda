@@ -28,102 +28,102 @@ The installation have to be done with **Python3**.
 Follow these instruction if you want to install only the python package without the ROS framework.
 
 1. Clone the repository:
-  ```bash
-  $ https://github.com/robotology/grasping-benchmarks-panda.git
+    ```bash
+    $ https://github.com/robotology/grasping-benchmarks-panda.git
 
-  ```
+    ```
 
 2. Install the package in editable mode:
-  ```bash
-  $ cd grasping-benchmarks-panda
-  $ pip3 install -e .
-  ```
+    ```bash
+    $ cd grasping-benchmarks-panda
+    $ pip3 install -e .
+    ```
 
 3. Test the installation with:
-  ```Python3
-  import grasping_benchmarks
-  help(grasping_benchmarks)
-  ```
+    ```Python3
+    import grasping_benchmarks
+    help(grasping_benchmarks)
+    ```
 
 ### grasping benchmarks ros
 Follow these instructions if you want to install also the ROS framework. To install and use this module, you need to include it in a *catkin workspace*.
 
 1. Install python3 ROS packages:
-  ```bashrc
-  $ sudo apt update
-  $ sudo apt install python3-catkin-pkg-modules python3-rospkg-modules python3-empy
-  ```
+    ```bashrc
+    $ sudo apt update
+    $ sudo apt install python3-catkin-pkg-modules python3-rospkg-modules python3-empy
+    ```
 
 2. Create a catkin workspace:
-  ```bash
-  $ mkdir -p ~/catkin_ws/src
-  $ cd catkin_ws
-  $ wstool init
-  ```
+    ```bash
+    $ mkdir -p ~/catkin_ws/src
+    $ cd catkin_ws
+    $ wstool init
+    ```
 
 3. Add to the catkin workspace some ROS dependencies to be built with python3:
-  ```bash
-  $ wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5
-  $ wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0
-  $ wstool set -y src/ros_numpy https://github.com/eric-wieser/ros_numpy
-  $ wstool up
-  ```
+    ```bash
+    $ wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5
+    $ wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0
+    $ wstool set -y src/ros_numpy https://github.com/eric-wieser/ros_numpy
+    $ wstool up
+    ```
 
 4. Clone the repository:
-  ```bash
-  $ wstool set -y src/grasping-benchmarks-panda --git https://github.com/robotology/grasping-benchmarks-panda
-  $ wstool up
-  ```
+    ```bash
+    $ wstool set -y src/grasping-benchmarks-panda --git https://github.com/robotology/grasping-benchmarks-panda
+    $ wstool up
+    ```
 
 5. Install the package in editable mode:
-  ```bash
-  $ cd src/grasping-benchmarks-panda
-  $ pip3 install -e .
-  ```
+    ```bash
+    $ cd src/grasping-benchmarks-panda
+    $ pip3 install -e .
+    ```
 
 6. Install the dependencies of the algorithm you want to benchmark. You can follow the instructions provided by the authors of each algorithm. The currently supported algorithms are:
-  - **Dexnet**:You need to install [gqcnn](https://berkeleyautomation.github.io/gqcnn/)
-  - **GPD**: Follow [gpd](https://github.com/atenpas/gpd)
-  - **Superquadrics-based grasp planner**: Follow [superquadric-lib](https://github.com/robotology/superquadric-lib). Note that you need to compile the python bindings.
+    - **Dexnet**:You need to install [gqcnn](https://berkeleyautomation.github.io/gqcnn/)
+    - **GPD**: Follow [gpd](https://github.com/atenpas/gpd)
+    - **Superquadrics-based grasp planner**: Follow [superquadric-lib](https://github.com/robotology/superquadric-lib). Note that you need to compile the python bindings.
 
 7. You need to move and compile the [grasping-benchmarks-panda/panda_simple_grasp_service](./panda_simple_grasp_service) catkin package in a different catkin workspace, based on python2 and with [MoveIt](http://docs.ros.org/melodic/api/moveit_tutorials/html/index.html) installed. Copy also the [panda_grasp_srv](./panda_grasp_srv) in this different catkin workspace. 
 
     **THE ONLY REASON WHY THE PACKAGE [panda_simple_grasp_service](./panda_simple_grasp_service) IS PLACED INSIDE THE grasping-benchmarks-panda IS THAT I DID NOT KNOW WHERE ELSE TO PUT IT ON GITHUB :) ONCE YOU WILL CREATE A DEDICATED REPOSITORY ON GITHUB FOR THE PANDA CONTROL FILES, YOU MAY CONSIDER TO MOVE panda_simple_grasp_service THERE**. 
 
 8. Build the catkin workspace:
-  ```bash
-  $ cd ~/catkin_ws
-  # Set -DGPD_ROS=ON if you want to benchmark GPD
-  $ catkin config --extend /opt/ros/melodic -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF
-  $ catkin build
-  $ source devel/setup.bash
-  $ echo 'source ~/catkin_ws/devel/setup.bash' >> ~/.bashrc
-  ```
+    ```bash
+    $ cd ~/catkin_ws
+    # Set -DGPD_ROS=ON if you want to benchmark GPD
+    $ catkin config --extend /opt/ros/melodic -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF
+    $ catkin build
+    $ source devel/setup.bash
+    $ echo 'source ~/catkin_ws/devel/setup.bash' >> ~/.bashrc
+    ```
 
 ### docker
 You can build the docker image for the specific algorithm you want to use by doing:
 1. Clone the repository:
-  ```bash
-  $ https://github.com/robotology/grasping-benchmarks-panda.git
-  $ cd grasping-benchmarks-panda/docker
-  ```
+    ```bash
+    $ https://github.com/robotology/grasping-benchmarks-panda.git
+    $ cd grasping-benchmarks-panda/docker
+    ```
 
 2. Install the package in editable mode:
-  ```bash
-  $ cd build_images
-  $ make USER_NAME=<docker_image_user_name> <target>
-  ```
-  | targets |
-  | ------- |
-  | dexnet |
-  | gpd |
-  | superquadrics |
-  | 6dgraspnet |
+    ```bash
+    $ cd build_images
+    $ make USER_NAME=<docker_image_user_name> <target>
+    ```
+    | targets |
+    | ------- |
+    | dexnet |
+    | gpd |
+    | superquadrics |
+    | 6dgraspnet |
 
 3. [Optional] There are also two additional docker images that can be built, one with development tools such as qtcreator and atom ([tools/](./docker/tools)) and another one with the Franka Panda libraries such as franka-ros and moveit ([panda_deps/](./docker/panda_deps)).
 These images are intended to provide additional features to the images compiled at point 2.
 
-  To create a unique image, you can use *docker-compose*. An example script is provided in [/docker/build_images/docker-compose.yaml](./docker/build_images/docker-compose.yaml).
+    To create a unique image, you can use *docker-compose*. An example script is provided in [/docker/build_images/docker-compose.yaml](./docker/build_images/docker-compose.yaml).
 
 ## Grasping Benchmarks Description
 The grasping benchmark python package follows the structure shown in the figure below.
