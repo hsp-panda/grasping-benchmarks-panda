@@ -194,7 +194,7 @@ It is the main actor of the framework, connecting the different modules and send
 
       - User messages can be sent to service `/PandaGraspServer/user_cmd`. For example, to move the robot in home position:
         ```bashrc
-        $ rosservice call /PandaGraspServer/user_cmd "cmd: data: 'go_home'"
+        $ rosservice call /PandaGraspServer/user_cmd "cmd: {data: 'go_home'}"
         ```
       **NOTE: REMEBER TO MOVE AND COMPILE THE PACKAGE [panda_simple_grasp_service](./panda_simple_grasp_service) AND [panda_grasp_srv](./panda_grasp_srv) IN A DIFFERENT CATKIN WORKSPACE, BASED ON PYTHON2 AND WITH MOVEIT COMPILED.**
 
@@ -214,5 +214,5 @@ It is the main actor of the framework, connecting the different modules and send
 
     - Send grasp commands to the service `/<target>_bench/user_cmd`. For example:
       ```bashrc
-      $ rosservice call /dexnet_bench/user_cmd "cmd: data: 'grasp'"
+      $ rosservice call /dexnet_bench/user_cmd "cmd: {data: 'grasp'}"
       ```
