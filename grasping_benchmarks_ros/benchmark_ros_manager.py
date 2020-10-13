@@ -22,7 +22,7 @@ import message_filters
 from sensor_msgs.msg import Image, PointCloud2, CameraInfo
 from geometry_msgs.msg import Transform
 from std_msgs.msg import Bool
-import tf2_ros
+from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
 
 from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
 
@@ -32,7 +32,6 @@ from grasping_benchmarks_ros.msg import BenchmarkGrasp
 from panda_grasp_srv.srv import PandaGrasp, PandaGraspRequest, PandaGraspResponse
 
 import numpy as np
-
 
 NEW_MSG = {
 "new_data": False,
@@ -152,8 +151,10 @@ class GraspingBenchmarksManager(object):
 
                 planner_req = GraspPlannerCloudRequest()
 
-                # define cloud
-                planner_req.cloud = self._pc_msg
+                # obtain point cloud in the camera reference frame
+                # planner_req.cloud = self._pc_msg
+                # obtain the PC of the scene in world reference frame
+                planner_req.cloud = do_transform_cloud(self._pc_msg, self._camera_pose)
 
                 camera_pose_msg = geometry_msgs.msg.Pose()
 
@@ -197,24 +198,39 @@ class GraspingBenchmarksManager(object):
             - grasp (obj: BenchmarkGrasp msg)
             - cam_pose (obj: geometry_msgs.msg.Transform)
         """
-        # Need to tranform the grasp pose from camera frame to world frame
-        # w_T_grasp = w_T_cam * cam_T_grasp
+
         gp_quat = grasp.pose.pose.orientation
         gp_pose = grasp.pose.pose.position
-        cam_T_grasp = np.eye(4)
-        cam_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
-        cam_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
 
-        cam_quat = cam_pose.rotation
-        cam_pose = cam_pose.translation
-        w_T_cam = np.eye(4)
-        w_T_cam[:3, :3] = quaternion_to_matrix([cam_quat.x, cam_quat.y, cam_quat.z, cam_quat.w])
-        w_T_cam[:3, 3] = np.array([cam_pose.x, cam_pose.y, cam_pose.z])
+        if self._grasp_planner_srv is GraspPlanner:
+            # Need to tranform the grasp pose from camera frame to world frame
+            # w_T_grasp = w_T_cam * cam_T_grasp
 
-        w_T_grasp = np.matmul(w_T_cam, cam_T_grasp)
-        print("w_T_cam\n ", w_T_cam)
-        print("cam_T_grasp\n ", cam_T_grasp)
-        print("w_T_grasp\n ", w_T_grasp)
+            cam_T_grasp = np.eye(4)
+            cam_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
+            cam_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
+
+            cam_quat = cam_pose.rotation
+            cam_pose = cam_pose.translation
+            w_T_cam = np.eye(4)
+            w_T_cam[:3, :3] = quaternion_to_matrix([cam_quat.x, cam_quat.y, cam_quat.z, cam_quat.w])
+            w_T_cam[:3, 3] = np.array([cam_pose.x, cam_pose.y, cam_pose.z])
+
+            w_T_grasp = np.matmul(w_T_cam, cam_T_grasp)
+            print("w_T_cam\n ", w_T_cam)
+            print("cam_T_grasp\n ", cam_T_grasp)
+            print("w_T_grasp\n ", w_T_grasp)
+
+
+        elif self._grasp_planner_srv is GraspPlannerCloud:
+            # In this case, there is no need to change the grasp
+            
+            w_T_grasp = np.eye(4)
+            w_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
+            w_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
+
+            print("w_T_grasp\n ", w_T_grasp)
+
 
         # Create the ROS pose message to send to robot
         grasp_pose_msg = geometry_msgs.msg.PoseStamped()
