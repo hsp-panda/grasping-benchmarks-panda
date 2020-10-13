@@ -20,9 +20,9 @@ import rospy
 import warnings
 import message_filters
 from sensor_msgs.msg import Image, PointCloud2, CameraInfo
+from sensor_msgs.point_cloud2 import read_points
 from geometry_msgs.msg import Transform
 from std_msgs.msg import Bool
-from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
 
 from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
 
@@ -154,7 +154,31 @@ class GraspingBenchmarksManager(object):
                 # obtain point cloud in the camera reference frame
                 # planner_req.cloud = self._pc_msg
                 # obtain the PC of the scene in world reference frame
-                planner_req.cloud = do_transform_cloud(self._pc_msg, self._camera_pose)
+
+                transform = self._camera_pose
+
+                pc_in = self._pc_msg
+                pc_out = pc_in.copy()
+
+                tr_matrix = np.identity(4)
+                tr_matrix[:3, :3] = quaternion_to_matrix([transform.rotation.x,
+                                                        transform.rotation.y,
+                                                        transform.rotation.z,
+                                                        transform.rotation.w])
+                tr_matrix[:3, 3] = [transform.translation.x, 
+                                    transform.translation.y,
+                                    transform.translation.z]
+                for p_in, p_out in [ read_points(pc_in), read_points(pc_out) ]:
+                    p_transformed = np.dot(np.array([p_in.x, p_in.y, p_in.z, 1.0]), tr_matrix)
+                    p_out.x = p_transformed[0]
+                    p_out_y = p_transformed[1]
+                    p_out_z = p_transformed[2]
+                
+                pc_out.header = transform.header
+
+                planner_req.cloud = pc_out
+
+                # planner_req.cloud = do_transform_cloud(self._pc_msg, self._camera_pose)
 
                 camera_pose_msg = geometry_msgs.msg.Pose()
 
@@ -220,7 +244,6 @@ class GraspingBenchmarksManager(object):
             print("w_T_cam\n ", w_T_cam)
             print("cam_T_grasp\n ", cam_T_grasp)
             print("w_T_grasp\n ", w_T_grasp)
-
 
         elif self._grasp_planner_srv is GraspPlannerCloud:
             # In this case, there is no need to change the grasp
