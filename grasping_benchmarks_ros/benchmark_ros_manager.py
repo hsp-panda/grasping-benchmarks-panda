@@ -19,10 +19,13 @@ Its features are:
 import rospy
 import warnings
 import message_filters
+import tf2_ros
+import sensor_msgs.point_cloud2
 from sensor_msgs.msg import Image, PointCloud2, CameraInfo
 from sensor_msgs.point_cloud2 import read_points
 from geometry_msgs.msg import Transform
 from std_msgs.msg import Bool
+import copy
 
 from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
 
@@ -62,7 +65,7 @@ class GraspingBenchmarksManager(object):
         rospy.loginfo("...Connected with service {}".format(grasp_planner_service_name))
 
         # --- panda service --- #
-        panda_service_name =  "/panda_grasp"
+        panda_service_name =  "/panda_action_server/panda_grasp"
         rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
         rospy.wait_for_service(panda_service_name, timeout=60.0)
         self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
@@ -158,27 +161,33 @@ class GraspingBenchmarksManager(object):
                 transform = self._camera_pose
 
                 pc_in = self._pc_msg
-                pc_out = pc_in.copy()
 
                 tr_matrix = np.identity(4)
                 tr_matrix[:3, :3] = quaternion_to_matrix([transform.rotation.x,
                                                         transform.rotation.y,
                                                         transform.rotation.z,
                                                         transform.rotation.w])
-                tr_matrix[:3, 3] = [transform.translation.x, 
+                tr_matrix[:3, 3] = [transform.translation.x,
                                     transform.translation.y,
                                     transform.translation.z]
-                for p_in, p_out in [ read_points(pc_in), read_points(pc_out) ]:
-                    p_transformed = np.dot(np.array([p_in.x, p_in.y, p_in.z, 1.0]), tr_matrix)
-                    p_out.x = p_transformed[0]
-                    p_out_y = p_transformed[1]
-                    p_out_z = p_transformed[2]
-                
-                pc_out.header = transform.header
+                points=[]
+                for p_in in read_points(pc_in, skip_nans=False, field_names=("x", "y", "z", "rgb")):
+                    p_transformed = np.dot(tr_matrix, np.array([p_in[0], p_in[1], p_in[2], 1.0]))
+                    p_out=[]
+                    p_out.append(p_transformed[0])
+                    p_out.append(p_transformed[1])
+                    p_out.append(p_transformed[2])
+                    p_out.append(p_in[3])
+                    points.append(p_out)
+
+                header = pc_in.header
+                header.frame_id="world"
+
+                import sensor_msgs.point_cloud2
+
+                pc_out = sensor_msgs.point_cloud2.create_cloud(header=header, fields=pc_in.fields, points=points)
 
                 planner_req.cloud = pc_out
-
-                # planner_req.cloud = do_transform_cloud(self._pc_msg, self._camera_pose)
 
                 camera_pose_msg = geometry_msgs.msg.Pose()
 
@@ -247,7 +256,7 @@ class GraspingBenchmarksManager(object):
 
         elif self._grasp_planner_srv is GraspPlannerCloud:
             # In this case, there is no need to change the grasp
-            
+
             w_T_grasp = np.eye(4)
             w_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
             w_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
