@@ -119,7 +119,7 @@ int main(int argc, char** argv)
   bool publish_rviz;
   node.param<bool>("publish_rviz", publish_rviz, false);
 
-  GpdGraspPlannerService grasp_detection_server(node, config_file, grasp_service_name);
+  GpdGraspPlannerService grasp_detection_server(node, config_file, grasp_service_name, publish_rviz);
 
    // Setup grasp service
   ros::ServiceServer service = node.advertiseService(grasp_service_name, &GpdGraspPlannerService::planGrasps,
