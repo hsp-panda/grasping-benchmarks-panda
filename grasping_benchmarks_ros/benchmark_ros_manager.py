@@ -156,6 +156,7 @@ class GraspingBenchmarksManager(object):
 
                 # obtain point cloud in the camera reference frame
                 # planner_req.cloud = self._pc_msg
+
                 # obtain the PC of the scene in world reference frame
 
                 transform = self._camera_pose
@@ -255,11 +256,19 @@ class GraspingBenchmarksManager(object):
             print("w_T_grasp\n ", w_T_grasp)
 
         elif self._grasp_planner_srv is GraspPlannerCloud:
-            # In this case, there is no need to change the grasp
+            # In this case, there is no need to change the grasp pose reference frame
 
             w_T_grasp = np.eye(4)
             w_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
             w_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
+
+            # However, we need to make sure the X axis points upwards and not downwards
+            # We don' t want the wrist to twist too much
+
+            z_axis = np.array([0.0, 0.0, 1.0])
+            if np.dot(w_T_grasp[:3, 0], z_axis) < 0:
+                rotation_around_z = quaternion_to_matrix([0,0,1,0])
+                w_T_grasp[:3,:3] = np.dot(w_T_grasp[:3,:3], rotation_around_z)
 
             print("w_T_grasp\n ", w_T_grasp)
 
