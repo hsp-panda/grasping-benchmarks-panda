@@ -42,7 +42,7 @@
 namespace GraspMessages
 {
 
-  grasping_benchmarks_ros::BenchmarkGrasp convertToBenchmarkGraspMsg(const gpd::candidate::Hand& hand, const std_msgs::Header& header);
+  grasping_benchmarks_ros::BenchmarkGrasp convertToBenchmarkGraspMsg(const gpd::candidate::Hand& hand, const std_msgs::Header& header, const Eigen::Vector3d& grasp_pose_offset);
 };
 
 #endif /* GRASP_MESSAGES_H_ */

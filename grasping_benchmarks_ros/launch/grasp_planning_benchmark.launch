@@ -54,12 +54,14 @@
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
     <arg name="config_file"                       default="$(find grasping_benchmarks_ros)/gpd_ros/cfg/ros_caffe_params.cfg" />
     <arg name="publish_rviz"                      default="true" />
+    <arg name="grasp_pose_offset"                 default="[0.0, 0.0, 0.05]" />
 
     <node name="$(arg grasp_planner_node_name)"  pkg="grasping_benchmarks_ros"  type="gpd_grasp_planner_service" ns="$(arg ns)" output="screen" >
       <param name="grasp_planner_service_name"          value="$(arg grasp_planner_service_name)" />
       <param name="grasp_publisher_name"                value="$(arg grasp_publisher_name)" />
       <param name="config_file"                         value="$(arg config_file)" />
-      <param name="publish_rviz"                         value="$(arg publish_rviz)" />
+      <param name="publish_rviz"                        value="$(arg publish_rviz)" />
+      <rosparam param="grasp_pose_offset"   subst_value="True">$(arg grasp_pose_offset)</rosparam>
     </node>
 
     <!-- Launch Manager -->

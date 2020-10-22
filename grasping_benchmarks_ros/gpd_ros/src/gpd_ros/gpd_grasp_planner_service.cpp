@@ -1,7 +1,7 @@
 #include <gpd_ros/gpd_grasp_planner_service.h>
 
 
-GpdGraspPlannerService::GpdGraspPlannerService(ros::NodeHandle& node, std::string config_file, std::string grasp_service_name,
+GpdGraspPlannerService::GpdGraspPlannerService(ros::NodeHandle& node, std::string config_file, std::vector<float> grasp_pose_offset, std::string grasp_service_name,
                                     bool publish_rviz, std::string grasp_publisher_name)
 {
   cloud_camera_ = NULL;
@@ -27,6 +27,8 @@ GpdGraspPlannerService::GpdGraspPlannerService(ros::NodeHandle& node, std::strin
   {
     grasps_pub_ = node.advertise<geometry_msgs::PoseStamped>(grasp_publisher_name, 10);
   }
+
+  grasp_pose_offset_ << double(grasp_pose_offset[0]), double(grasp_pose_offset[1]), double(grasp_pose_offset[2]);
 
   node.getParam("workspace", workspace_); // Do not know where this wariable is used
 
@@ -85,7 +87,7 @@ bool GpdGraspPlannerService::planGrasps(grasping_benchmarks_ros::GraspPlannerClo
     cloud_camera_header_.frame_id = cloud_ros.header.frame_id;
 
     // 4. Create benchmark grasp reply.
-    grasping_benchmarks_ros::BenchmarkGrasp bench_grasp = GraspMessages::convertToBenchmarkGraspMsg(*grasps[0], cloud_camera_header_);
+    grasping_benchmarks_ros::BenchmarkGrasp bench_grasp = GraspMessages::convertToBenchmarkGraspMsg(*grasps[0], cloud_camera_header_, grasp_pose_offset_);
 
     // Publish grasp on topic
     grasps_pub_.publish(bench_grasp.pose);
@@ -116,10 +118,15 @@ int main(int argc, char** argv)
 
   node.getParam("config_file", config_file);
 
+  // Pose offset to be applied when converting from gpd to benchmark standard grasp message
+  // In gpd reference frame
+  std::vector<float> grasp_pose_offset;
+  node.param("grasp_pose_offset", grasp_pose_offset, {0.0, 0.0, 0.0});
+
   bool publish_rviz;
   node.param<bool>("publish_rviz", publish_rviz, false);
 
-  GpdGraspPlannerService grasp_detection_server(node, config_file, grasp_service_name, publish_rviz);
+  GpdGraspPlannerService grasp_detection_server(node, config_file, grasp_pose_offset, grasp_service_name, publish_rviz);
 
    // Setup grasp service
   ros::ServiceServer service = node.advertiseService(grasp_service_name, &GpdGraspPlannerService::planGrasps,

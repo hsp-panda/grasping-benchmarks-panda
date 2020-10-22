@@ -1,7 +1,7 @@
 #include <gpd_ros/grasp_messages.h>
 
 
-grasping_benchmarks_ros::BenchmarkGrasp GraspMessages::convertToBenchmarkGraspMsg(const gpd::candidate::Hand& hand, const std_msgs::Header& header)
+grasping_benchmarks_ros::BenchmarkGrasp GraspMessages::convertToBenchmarkGraspMsg(const gpd::candidate::Hand& hand, const std_msgs::Header& header, const Eigen::Vector3d& grasp_pose_offset)
 {
   //first transform grasp orientation wrt camera
 
@@ -21,7 +21,9 @@ grasping_benchmarks_ros::BenchmarkGrasp GraspMessages::convertToBenchmarkGraspMs
 
   Eigen::Matrix4d offset;
   offset.setIdentity();
-  offset(2,3) = -0.05;
+  offset(0,3) = grasp_pose_offset(0);
+  offset(1,3) = grasp_pose_offset(1);
+  offset(2,3) = grasp_pose_offset(2);
 
   Eigen::Matrix4d cam_T_grasp = rotation * offset;
 

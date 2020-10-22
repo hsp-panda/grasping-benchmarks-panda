@@ -65,7 +65,7 @@ public:
    * \brief Constructor.
    * \param node the ROS node
   */
-  GpdGraspPlannerService(ros::NodeHandle& node, std::string config_file, std::string grasp_service_name="",
+  GpdGraspPlannerService(ros::NodeHandle& node, std::string config_file, std::vector<float> grasp_pose_offset, std::string grasp_service_name="",
                       bool publish_rviz=false, std::string grasp_publisher_name="");
 
   /**
@@ -101,6 +101,8 @@ private:
   bool use_rviz_; ///< if rviz is used for visualization instead of PCL
   std::vector<double> workspace_; ///< workspace limits
   Eigen::Vector3d view_point_; ///< (input) view point of the camera onto the point cloud
+
+  Eigen::Vector3d grasp_pose_offset_; ///< offset traslation to apply to the grasp pose (in its ref frame) before returning it to the benchmark
 };
 
 #endif /* GRASP_DETECTION_SERVER_H_ */
