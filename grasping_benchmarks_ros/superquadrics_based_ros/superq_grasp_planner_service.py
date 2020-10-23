@@ -29,7 +29,7 @@ from grasping_benchmarks.superquadric_based.superquadrics_grasp_planner import S
 
 
 class SuperquadricGraspPlannerService(SuperquadricsGraspPlanner):
-    def __init__(self, cfg_file, grasp_service_name, grasp_publisher_name):
+    def __init__(self, cfg_file, grasp_service_name, grasp_publisher_name, grasp_offset):
         """
         Parameters
         ----------
@@ -40,7 +40,7 @@ class SuperquadricGraspPlannerService(SuperquadricsGraspPlanner):
         grasp_pose_publisher: (obj:`Publisher`): ROS publisher to publish pose of planned grasp for visualization.
         """
 
-        super(SuperquadricGraspPlannerService, self).__init__(cfg_file)
+        super(SuperquadricGraspPlannerService, self).__init__(cfg_file, grasp_offset)
 
         # Create publisher to publish pose of final grasp.
         self.grasp_pose_publisher = None
@@ -156,10 +156,13 @@ if __name__ == "__main__":
     config_file = rospy.get_param("~config_file")
     grasp_service_name = rospy.get_param("~grasp_planner_service_name")
     grasp_publisher_name = rospy.get_param("~grasp_publisher_name")
+    grasp_offset = rospy.get_param("grasp_pose_offset", [0.0, 0.0, 0.0])
+
+    grasp_offset = np.array(grasp_offset[:3])
 
     # Instantiate the grasp planner.
     grasp_planner = SuperquadricGraspPlannerService(config_file,
-                                              grasp_service_name, grasp_publisher_name)
+                                              grasp_service_name, grasp_publisher_name, grasp_offset)
 
     rospy.loginfo("Superquadric-based grasp detection server initialized, waiting for a point cloud ...")
 
