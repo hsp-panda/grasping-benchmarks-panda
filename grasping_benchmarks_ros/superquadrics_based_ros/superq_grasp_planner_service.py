@@ -156,7 +156,7 @@ if __name__ == "__main__":
     config_file = rospy.get_param("~config_file")
     grasp_service_name = rospy.get_param("~grasp_planner_service_name")
     grasp_publisher_name = rospy.get_param("~grasp_publisher_name")
-    grasp_offset = rospy.get_param("grasp_pose_offset", [0.0, 0.0, 0.0])
+    grasp_offset = rospy.get_param("~grasp_pose_offset", [0.0, 0.0, 0.0])
 
     grasp_offset = np.array(grasp_offset[:3])
 
