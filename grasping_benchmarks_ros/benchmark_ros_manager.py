@@ -266,9 +266,9 @@ class GraspingBenchmarksManager(object):
             # We don' t want the wrist to twist too much
 
             z_axis = np.array([0.0, 0.0, 1.0])
-            if np.dot(w_T_grasp[:3, 0], z_axis) < 0:
-                rotation_around_z = quaternion_to_matrix([0,0,1,0])
-                w_T_grasp[:3,:3] = np.dot(w_T_grasp[:3,:3], rotation_around_z)
+            # if np.dot(w_T_grasp[:3, 0], z_axis) < 0:
+            #     rotation_around_z = quaternion_to_matrix([0,0,1,0])
+            #     w_T_grasp[:3,:3] = np.dot(w_T_grasp[:3,:3], rotation_around_z)
 
             print("w_T_grasp\n ", w_T_grasp)
 
