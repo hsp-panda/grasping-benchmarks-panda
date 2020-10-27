@@ -57,19 +57,22 @@ from grasping_benchmarks.base.base_grasp_planner import BaseGraspPlanner, Camera
 from grasping_benchmarks.base.grasp import Grasp6D
 
 
-
 class DexnetGraspPlanner(BaseGraspPlanner):
-    def __init__(self, model_dir, fully_conv):
+    def __init__(self, model_dir, fully_conv, grasp_offset=np.zeros(3)):
         """
         Parameters
         ----------
             model_dir (str): path to model
             fully_conv (bool): flag to use fully-convolutional network
+            grasp_offset (np.array): 3-dim array of adjustment values for x,y,z in the eef ref frame
+
         """
         self.configure(model_dir, fully_conv)
         super(DexnetGraspPlanner, self).__init__(self.cfg)
 
         self._dexnet_gp = None
+
+        self._grasp_offset = grasp_offset
 
 
     def configure(self, model_dir, fully_conv):
@@ -78,6 +81,7 @@ class DexnetGraspPlanner(BaseGraspPlanner):
         Args:
             model_config_file (str): path to model configuration file of type config.json
             fully_conv (bool): if fully-convolutional network
+            grasp_offset (np.array): 3-dim array of values to adjust every pose in the eef ref frame
 
         """
 
@@ -257,7 +261,8 @@ class DexnetGraspPlanner(BaseGraspPlanner):
         cam_T_grasp = np.append(cam_T_grasp, np.array([[0, 0, 0, 1]]), axis=0)
 
         grasp_target_T_panda_ef = np.eye(4)
-        grasp_target_T_panda_ef[2, 3] = -0.13
+        # grasp_target_T_panda_ef[2, 3] = -0.13
+        grasp_target_T_panda_ef[:3, 3] = self._grasp_offset
 
         cam_T_grasp = np.matmul(cam_T_grasp, grasp_target_T_panda_ef)
 

@@ -31,18 +31,19 @@ from grasping_benchmarks.dexnet.dexnet_grasp_planner import DexnetGraspPlanner
 
 
 class DexnetGraspPlannerService(DexnetGraspPlanner):
-    def __init__(self, model_file, fully_conv, cv_bridge, grasp_service_name, grasp_publisher_name):
+    def __init__(self, model_file, fully_conv, grasp_offset, cv_bridge, grasp_service_name, grasp_publisher_name):
         """
         Parameters
         ----------
         model_config_file (str): path to model configuration file of type config.json
         fully_conv (bool): flag to use fully-convolutional network
+        grasp_offset (list): static offset transformation to apply to the grasp
         cv_bridge: (obj:`CvBridge`): ROS `CvBridge`
 
         grasp_pose_publisher: (obj:`Publisher`): ROS publisher to publish pose of planned grasp for visualization.
         """
 
-        super(DexnetGraspPlannerService, self).__init__(model_file, fully_conv)
+        super(DexnetGraspPlannerService, self).__init__(model_file, fully_conv, grasp_offset)
 
         self.cv_bridge = cv_bridge
 
@@ -261,6 +262,9 @@ if __name__ == "__main__":
     fully_conv = rospy.get_param("~fully_conv")
     grasp_service_name = rospy.get_param("~grasp_planner_service_name")
     grasp_publisher_name = rospy.get_param("~grasp_publisher_name")
+    grasp_offset = rospy.get_param("~grasp_pose_offset", [0.0, 0.0, 0.0])
+
+    grasp_offset = np.array(grasp_offset[:3])
 
     if model_dir.lower() == "default":
         model_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -269,7 +273,7 @@ if __name__ == "__main__":
     model_dir = os.path.join(model_dir, model_name)
 
     # Instantiate the grasp planner.
-    grasp_planner = DexnetGraspPlannerService(model_dir, fully_conv, cv_bridge,
+    grasp_planner = DexnetGraspPlannerService(model_dir, fully_conv, grasp_offset, cv_bridge,
                                               grasp_service_name, grasp_publisher_name)
 
     rospy.loginfo("Grasping Policy Initialized")

@@ -35,6 +35,7 @@ class BaseGraspPlanner(object):
         self._grasp_poses = []
         self._best_grasp = None
         self._camera_data = CameraData()
+        self._grasp_offset = np.zeros(3)
 
     def reset(self):
         self.grasp_poses = []

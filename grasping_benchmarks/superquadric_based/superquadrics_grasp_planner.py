@@ -18,12 +18,15 @@ class SuperquadricsGraspPlanner(BaseGraspPlanner):
     """Superquadric-based grasp planner
 
     """
-    def __init__(self, cfg_file="cfg/config_panda.yaml"):
+    def __init__(self, cfg_file="cfg/config_panda.yaml", grasp_offset=np.zeros(3)):
         """
         Parameters
         ----------
         cfg : dict
             Dictionary of configuration parameters.
+
+        grasp_offset : np.array
+            3-d array of x,y,z offset to apply to every grasp in eef frame
         """
 
         self._camera_data = CameraData()
@@ -49,6 +52,8 @@ class SuperquadricsGraspPlanner(BaseGraspPlanner):
         self._grasp_estimator = sb.GraspEstimatorApp()
 
         self.configure(self.cfg)
+
+        self._grasp_offset = grasp_offset
 
     def configure(self, cfg):
 
@@ -339,7 +344,8 @@ class SuperquadricsGraspPlanner(BaseGraspPlanner):
 
         robot_base_T_icub_gp = np.matmul(robot_base_T_icub_base, icub_base_T_icub_gp)
         icub_gp_T_panda_gp = np.eye(4)
-        icub_gp_T_panda_gp[2,3] = -0.10
+        # icub_gp_T_panda_gp[2,3] = -0.10
+        grasp_target_T_panda_ef[:3, 3] = self._grasp_offset
 
         # --- transform grasp pose from icub hand ref frame to robot hand ref frame --- #
         robot_base_T_robot_gp = np.matmul(robot_base_T_icub_gp, self._icub_hand_T_robot_hand)
