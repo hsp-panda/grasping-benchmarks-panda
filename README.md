@@ -86,9 +86,7 @@ Follow these instructions if you want to install also the ROS framework. To inst
     - **GPD**: Follow [gpd](https://github.com/atenpas/gpd)
     - **Superquadrics-based grasp planner**: Follow [superquadric-lib](https://github.com/robotology/superquadric-lib). Note that you need to compile the python bindings.
 
-7. You need to move and compile the [grasping-benchmarks-panda/panda_simple_grasp_service](./panda_simple_grasp_service) catkin package in a different catkin workspace, based on python2 and with [MoveIt](http://docs.ros.org/melodic/api/moveit_tutorials/html/index.html) installed. Copy also the [panda_grasp_srv](./panda_grasp_srv) in this different catkin workspace. 
-
-    **THE ONLY REASON WHY THE PACKAGE [panda_simple_grasp_service](./panda_simple_grasp_service) IS PLACED INSIDE THE grasping-benchmarks-panda IS THAT I DID NOT KNOW WHERE ELSE TO PUT IT ON GITHUB :) ONCE YOU WILL CREATE A DEDICATED REPOSITORY ON GITHUB FOR THE PANDA CONTROL FILES, YOU MAY CONSIDER TO MOVE panda_simple_grasp_service THERE**. 
+7. You will need a package to move the robot and execute motion primitives such as movement and grasps. You will need a python2 catkin workspace and a [MoveIt](http://docs.ros.org/melodic/api/moveit_tutorials/html/index.html) installation where to compile the [grasping-benchmarks-panda/panda_simple_grasp_service](./panda_simple_grasp_service)+[panda_grasp_srv](./panda_grasp_srv) or the [panda_grasp_server](https://github.com/hsp-panda/panda_grasp_server)+[panda_ros_common](https://github.com/hsp-panda/panda_ros_common). This last option is a more complete and configurable tool. 
 
 8. Build the catkin workspace:
     ```bash
