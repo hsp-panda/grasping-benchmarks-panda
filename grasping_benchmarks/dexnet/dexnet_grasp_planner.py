@@ -147,7 +147,7 @@ class DexnetGraspPlanner(BaseGraspPlanner):
             raise ValueError("Invalid {} policy type: {}".format(fc, policy_type))
 
         # --- Set minimum input dimensions --- #
-        if policy_type is "fully_conv_pj":
+        if policy_type == "fully_conv_pj":
             self.min_width = self.cfg["policy"]["gqcnn_recep_w"]
             self.min_height = self.cfg["policy"]["gqcnn_recep_h"]
 
