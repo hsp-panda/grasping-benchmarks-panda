@@ -20,11 +20,14 @@
     <arg name="grasp_planner_service"             default="GraspPlanner" />
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
 
-    <arg name="model_name"                        default="GQCNN-4.0-PJ" />
-    <arg name="model_dir"                         default="/workspace/sources/gqcnn/models" />
-    <arg name="fully_conv"                        default="False" />
+    <arg name="model_dir"                         default="/home/icub/workspace/gqcnn/models" />
+    <arg name="fully_conv"                        default="false" />
+    <arg name="model_name"                        default="FC-GQCNN-4.0-PJ" if="$(eval fully_conv == true)" />
+    <arg name="model_name"                        default="GQCNN-4.0-PJ" if="$(eval fully_conv == false)" />
 
-    <arg name="grasp_pose_offset"                 default="[0.0, 0.0, 0.0]" />
+    <!-- <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.02]" /> -->
+    <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.015]" />
+
 
     <node name="dexnet_grasp_planner"  pkg="grasping_benchmarks_ros" type="dexnet_grasp_planner_service.py" ns="$(arg ns)" output="screen" >
     	<param name="model_name"                          value="$(arg model_name)" />
