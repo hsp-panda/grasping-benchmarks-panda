@@ -65,7 +65,7 @@ class GraspingBenchmarksManager(object):
         rospy.loginfo("...Connected with service {}".format(grasp_planner_service_name))
 
         # --- panda service --- #
-        panda_service_name =  "/panda_action_server/panda_grasp"
+        panda_service_name =  "/panda_grasp_server/panda_grasp"
         rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
         rospy.wait_for_service(panda_service_name, timeout=60.0)
         self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
