@@ -12,6 +12,44 @@
     <arg name="enable_pointcloud"   value="true"/>
   </include>
 
+
+  <!-- Run 6dGraspnet Grasp Planner -->
+  <group if="$(arg graspnet)">
+    <arg name="ns"  default="graspnet_bench" />
+    <arg name="grasp_planner_service_name"        default="graspnet_grasp_planner_service" />
+    <arg name="grasp_planner_service"             default="GraspPlanner" />
+    <arg name="grasp_publisher_name"              default="candidate_grasp" />
+
+
+    <arg name="model_dir"                         default="../workspace/sources/gqcnn/models" />
+    <arg name="fully_conv"                        default="false" />
+    <arg name="model_name"                        default="FC-GQCNN-4.0-PJ" if="$(eval fully_conv == true)" />
+    <arg name="model_name"                        default="GQCNN-4.0-PJ" if="$(eval fully_conv == false)" />
+
+    <!-- <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.02]" /> -->
+    <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.015]" />
+
+
+    <node name="graspnet_grasp_planner"  pkg="grasping_benchmarks_ros" type="graspnet_grasp_planner_service.py" ns="$(arg ns)" output="screen" >
+    	<param name="model_name"                          value="$(arg model_name)" />
+    	<param name="model_dir"                           value="$(arg model_dir)" />
+    	<param name="fully_conv"                          value="$(arg fully_conv)" />
+      <param name="grasp_planner_service_name"          value="$(arg grasp_planner_service_name)" />
+      <param name="grasp_publisher_name"                value="$(arg grasp_publisher_name)" />
+      <rosparam param="grasp_pose_offset"               subst_value="True">$(arg grasp_pose_offset)</rosparam>
+    </node>
+
+    <!-- Launch Manager -->
+    <arg name="user_cmd_service_name"              default="user_cmd" />
+
+    <node name="grasp_benchmark_manager" pkg="grasping_benchmarks_ros" type="benchmark_ros_manager.py" ns="$(arg ns)" output="screen">
+        <param name="user_cmd_service_name"        value="$(arg user_cmd_service_name)" />
+        <param name="grasp_planner_service_name"    value="$(arg grasp_planner_service_name)" />
+        <param name="grasp_planner_service"         value="$(arg grasp_planner_service)" />
+    </node>
+
+  </group>
+
   <!-- Run Dexnet Grasp Planner -->
   <group if="$(arg dexnet)">
 
@@ -20,7 +58,7 @@
     <arg name="grasp_planner_service"             default="GraspPlanner" />
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
 
-    <arg name="model_dir"                         default="/home/icub/workspace/gqcnn/models" />
+    <arg name="model_dir"                         default="../workspace/sources/gqcnn/models" />
     <arg name="fully_conv"                        default="false" />
     <arg name="model_name"                        default="FC-GQCNN-4.0-PJ" if="$(eval fully_conv == true)" />
     <arg name="model_name"                        default="GQCNN-4.0-PJ" if="$(eval fully_conv == false)" />
