@@ -1,0 +1,9 @@
+# request params
+sensor_msgs/Image color_image
+sensor_msgs/Image depth_image
+sensor_msgs/CameraInfo camera_info
+sensor_msgs/PointCloud2 cloud
+geometry_msgs/Pose view_point
+---
+# response params
+BenchmarkGrasp grasp

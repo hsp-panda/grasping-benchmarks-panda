@@ -36,6 +36,14 @@ from panda_grasp_srv.srv import PandaGrasp, PandaGraspRequest, PandaGraspRespons
 
 import numpy as np
 
+import rosbag
+
+import ipdb
+
+
+
+
+
 NEW_MSG = {
 "new_data": False,
 "data": {},
@@ -45,12 +53,12 @@ NEW_MSG = {
 GRASP_PLANNER_SRV = {
     'GraspPlanner': GraspPlanner,
     'GraspPlannerCloud': GraspPlannerCloud,
+    'GraspPlannerImageAndCloud': GraspPlannerImageAndCloud,
     }
 
 
 class GraspingBenchmarksManager(object):
     def __init__(self, grasp_planner_service_name, grasp_planner_service, user_cmd_service_name, panda_service_name, verbose=False):
-
         self._verbose = verbose
 
         # --- new grasp command service --- #
@@ -64,12 +72,12 @@ class GraspingBenchmarksManager(object):
         self._grasp_planner = rospy.ServiceProxy(grasp_planner_service_name, self._grasp_planner_srv)
         rospy.loginfo("...Connected with service {}".format(grasp_planner_service_name))
 
-        # --- panda service --- #
-        panda_service_name =  "/panda_grasp_server/panda_grasp"
-        rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
-        rospy.wait_for_service(panda_service_name, timeout=60.0)
-        self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
-        rospy.loginfo("...Connected with service {}".format(panda_service_name))
+        # # --- panda service --- #
+        # panda_service_name =  "/panda_grasp_server/panda_grasp"
+        # rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
+        # rospy.wait_for_service(panda_service_name, timeout=60.0)
+        # self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
+        # rospy.loginfo("...Connected with service {}".format(panda_service_name))
 
         # --- subscribers to camera topics --- #
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
@@ -83,7 +91,7 @@ class GraspingBenchmarksManager(object):
                                                                 queue_size=1, slop=0.5)
         self._tss.registerCallback(self._camera_data_callback)
 
-        # --- robot/camera transform listener --- #
+        # # --- robot/camera transform listener --- #
         self._tfBuffer = tf2_ros.buffer.Buffer()
         listener = tf2_ros.transform_listener.TransformListener(self._tfBuffer)
 
@@ -99,10 +107,47 @@ class GraspingBenchmarksManager(object):
         self._new_camera_data = False
         self._abort = False
 
+
+        #---------------image from rosbag -------#
+        bag = rosbag.Bag('/home/aaltobelli/catkin_ws/test.bag')
+        for topic_cam_info_sub, msg_cam_info_sub, t_cam_info_sub in bag.read_messages(topics=['/camera/aligned_depth_to_color/camera_info']):
+           print(t_cam_info_sub)
+
+        for topic_rgb_sub, msg_rgb_sub, t_rgb_sub in bag.read_messages(topics=['/camera/color/image_raw']):
+           print(t_rgb_sub)
+
+        for topic_depth_sub, msg_depth_sub, t_depth_sub in bag.read_messages(topics=['/camera/aligned_depth_to_color/image_raw']):
+           print(t_depth_sub)
+
+        for topic_pc_sub, msg_pc_sub, t_pc_sub in bag.read_messages(topics=['/camera/depth_registered/points']):
+           print(t_pc_sub)
+
+        bag.close()
+
+        self._cam_info_msg = msg_cam_info_sub
+        self._rgb_msg = msg_rgb_sub
+        self._depth_msg = msg_depth_sub
+        self._pc_msg = msg_pc_sub
+        self._camera_pose = geometry_msgs.msg.Transform()
+        self._camera_pose.rotation.w = 1
+        
+
+        self._seg_msg = NEW_MSG
+
+        self._new_camera_data = True
+        self._abort = False
+
+        
+
+
+
+
     # ---------------------- #
     # Grasp planning handler #
     # ---------------------- #
     def user_cmd(self, req):
+        ipdb.set_trace()
+        self._cam_info_msg
         """New grasp request handler
 
         Parameters
@@ -124,7 +169,6 @@ class GraspingBenchmarksManager(object):
             return Bool(True)
 
         elif req.cmd.data == "grasp":
-
             # --- get images --- #
             if self._verbose:
                 print("... waiting for images ...")
@@ -199,6 +243,66 @@ class GraspingBenchmarksManager(object):
 
                 planner_req.view_point = camera_pose_msg
 
+            
+            # or GraspPlannerImageAndCloud
+            elif self._grasp_planner_srv is GraspPlannerImageAndCloud:
+
+
+                planner_req = GraspPlannerImageAndCloudRequest()
+
+                planner_req.color_image = self._rgb_msg
+                planner_req.depth_image = self._depth_msg
+                planner_req.camera_info = self._cam_info_msg
+
+                # obtain point cloud in the camera reference frame
+                # planner_req.cloud = self._pc_msg
+
+                # obtain the PC of the scene in world reference frame
+
+                transform = self._camera_pose
+
+                pc_in = self._pc_msg
+
+
+                tr_matrix = np.identity(4)
+                tr_matrix[:3, :3] = quaternion_to_matrix([transform.rotation.x,
+                                                        transform.rotation.y,
+                                                        transform.rotation.z,
+                                                        transform.rotation.w])
+                tr_matrix[:3, 3] = [transform.translation.x,
+                                    transform.translation.y,
+                                    transform.translation.z]
+                points=[]
+                for p_in in read_points(pc_in, skip_nans=False, field_names=("x", "y", "z", "rgb")):
+                    p_transformed = np.dot(tr_matrix, np.array([p_in[0], p_in[1], p_in[2], 1.0]))
+                    p_out=[]
+                    p_out.append(p_transformed[0])
+                    p_out.append(p_transformed[1])
+                    p_out.append(p_transformed[2])
+                    p_out.append(p_in[3])
+                    points.append(p_out)
+
+                header = pc_in.header
+                header.frame_id="world"
+
+                import sensor_msgs.point_cloud2
+
+                pc_out = sensor_msgs.point_cloud2.create_cloud(header=header, fields=pc_in.fields, points=points)
+
+                planner_req.cloud = pc_out
+            
+
+                camera_pose_msg = geometry_msgs.msg.Pose()
+
+                camera_pose_msg.position.x = self._camera_pose.translation.x
+                camera_pose_msg.position.y = self._camera_pose.translation.y
+                camera_pose_msg.position.z = self._camera_pose.translation.z
+                camera_pose_msg.orientation = self._camera_pose.rotation
+
+                planner_req.view_point = camera_pose_msg
+                ipdb.set_trace()
+
+          
             if self._verbose:
                 print("... send request to server ...")
 
@@ -219,7 +323,7 @@ class GraspingBenchmarksManager(object):
             if self._abort:
                 rospy.loginfo("grasp execution was aborted by the user")
                 return Bool(False)
-
+            ipdb.set_trace()
             return self.execute_grasp(reply.grasp, self._camera_pose)
 
         elif req.cmd.data == "abort":
