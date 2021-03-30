@@ -60,7 +60,7 @@ GRASP_PLANNER_SRV = {
 class GraspingBenchmarksManager(object):
     def __init__(self, grasp_planner_service_name, grasp_planner_service, user_cmd_service_name, panda_service_name, verbose=False):
         self._verbose = verbose
-
+        # ipdb.set_trace()
         # --- new grasp command service --- #
         self._new_grasp_srv = rospy.Service(user_cmd_service_name, UserCmd, self.user_cmd)
 
@@ -83,12 +83,13 @@ class GraspingBenchmarksManager(object):
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
         self._rgb_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         self._depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
-        self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
+        # self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
+        self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
         self._seg_sub = rospy.Subscriber('rgb/image_seg', Image, self.seg_img_callback, queue_size=10)
 
         # --- camera data synchronizer --- #
         self._tss = message_filters.ApproximateTimeSynchronizer([self._cam_info_sub, self._rgb_sub, self._depth_sub, self._pc_sub],
-                                                                queue_size=1, slop=0.5)
+                                                                queue_size=100, slop=0.5)
         self._tss.registerCallback(self._camera_data_callback)
 
         # # --- robot/camera transform listener --- #
@@ -108,36 +109,7 @@ class GraspingBenchmarksManager(object):
         self._abort = False
 
 
-        #---------------image from rosbag -------#
-        bag = rosbag.Bag('/home/aaltobelli/catkin_ws/test.bag')
-        for topic_cam_info_sub, msg_cam_info_sub, t_cam_info_sub in bag.read_messages(topics=['/camera/aligned_depth_to_color/camera_info']):
-           print(t_cam_info_sub)
-
-        for topic_rgb_sub, msg_rgb_sub, t_rgb_sub in bag.read_messages(topics=['/camera/color/image_raw']):
-           print(t_rgb_sub)
-
-        for topic_depth_sub, msg_depth_sub, t_depth_sub in bag.read_messages(topics=['/camera/aligned_depth_to_color/image_raw']):
-           print(t_depth_sub)
-
-        for topic_pc_sub, msg_pc_sub, t_pc_sub in bag.read_messages(topics=['/camera/depth_registered/points']):
-           print(t_pc_sub)
-
-        bag.close()
-
-        self._cam_info_msg = msg_cam_info_sub
-        self._rgb_msg = msg_rgb_sub
-        self._depth_msg = msg_depth_sub
-        self._pc_msg = msg_pc_sub
-        self._camera_pose = geometry_msgs.msg.Transform()
-        self._camera_pose.rotation.w = 1
-        
-
-        self._seg_msg = NEW_MSG
-
-        self._new_camera_data = True
-        self._abort = False
-
-        
+    
 
 
 
@@ -146,7 +118,7 @@ class GraspingBenchmarksManager(object):
     # Grasp planning handler #
     # ---------------------- #
     def user_cmd(self, req):
-        ipdb.set_trace()
+        # ipdb.set_trace()
         self._cam_info_msg
         """New grasp request handler
 
@@ -247,7 +219,7 @@ class GraspingBenchmarksManager(object):
             # or GraspPlannerImageAndCloud
             elif self._grasp_planner_srv is GraspPlannerImageAndCloud:
 
-
+          
                 planner_req = GraspPlannerImageAndCloudRequest()
 
                 planner_req.color_image = self._rgb_msg
@@ -273,7 +245,12 @@ class GraspingBenchmarksManager(object):
                                     transform.translation.y,
                                     transform.translation.z]
                 points=[]
+                
+                #pointsTest = np.array([[0,0,0.5,1.0],[0.1,0.1,0.5,1.0],[0.2,0.2,0.5,1.0],[0.5,0.2,0.5,1.0]])    
+                #camera_pose_tf = self._tfBuffer.lookup_transform( 'panda_link0', self._cam_info_msg.header.frame_id, rospy.Time())
+
                 for p_in in read_points(pc_in, skip_nans=False, field_names=("x", "y", "z", "rgb")):
+                #for p_in in pointsTest:    
                     p_transformed = np.dot(tr_matrix, np.array([p_in[0], p_in[1], p_in[2], 1.0]))
                     p_out=[]
                     p_out.append(p_transformed[0])
@@ -282,9 +259,11 @@ class GraspingBenchmarksManager(object):
                     p_out.append(p_in[3])
                     points.append(p_out)
 
+
                 header = pc_in.header
                 header.frame_id="world"
 
+                ipdb.set_trace()
                 import sensor_msgs.point_cloud2
 
                 pc_out = sensor_msgs.point_cloud2.create_cloud(header=header, fields=pc_in.fields, points=points)
@@ -415,6 +394,7 @@ class GraspingBenchmarksManager(object):
     # ------------------- #
     def _camera_data_callback(self, cam_info, rgb, depth, pc):
         # rospy.loginfo("New data from camera!")
+
         self._cam_info_msg = cam_info
         self._rgb_msg = rgb
         self._depth_msg = depth

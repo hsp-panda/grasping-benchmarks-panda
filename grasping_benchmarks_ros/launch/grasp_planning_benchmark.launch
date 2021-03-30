@@ -26,8 +26,8 @@
 
     <!-- <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.02]" /> -->
     <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.015]" />
-    <node name="graspnet_grasp_planner"  pkg="grasping_benchmarks_ros" type="graspnet_grasp_planner_service.py" ns="$(arg ns)" output="screen" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)">
-    	<param name="fully_conv"                          value="$(arg fully_conv)" />
+
+    <node name="graspnet_grasp_planner"  pkg="grasping_benchmarks_ros" type="graspnet_grasp_planner_service.py" ns="$(arg ns)" output="screen">
     	<param name="model_dir"                           value="$(arg model_dir)" />
       <param name="grasp_planner_service_name"          value="$(arg grasp_planner_service_name)" />
       <param name="grasp_publisher_name"                value="$(arg grasp_publisher_name)" />
@@ -37,7 +37,8 @@
     <!-- Launch Manager -->
     <arg name="user_cmd_service_name"              default="user_cmd" />
 
-    <node name="grasp_benchmark_manager" pkg="grasping_benchmarks_ros" type="benchmark_ros_manager.py" ns="$(arg ns)" output="screen" launch-prefix="sudo -E PYTHONPATH=$(env PYTHONPATH)">
+
+    <node name="grasp_benchmark_manager" pkg="grasping_benchmarks_ros" type="benchmark_ros_manager.py" ns="$(arg ns)" output="screen"> 
         <param name="user_cmd_service_name"        value="$(arg user_cmd_service_name)" />
         <param name="grasp_planner_service_name"    value="$(arg grasp_planner_service_name)" />
         <param name="grasp_planner_service"         value="$(arg grasp_planner_service)" />

@@ -28,6 +28,7 @@ from grasping_benchmarks_ros.msg import BenchmarkGrasp
 from grasping_benchmarks.base.base_grasp_planner import CameraData
 
 from grasping_benchmarks.dexnet.dexnet_grasp_planner import DexnetGraspPlanner
+import ipdb
 
 
 class DexnetGraspPlannerService(DexnetGraspPlanner):
@@ -71,6 +72,8 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
 
         # Get the raw camera info as ROS `CameraInfo`.
         raw_camera_info = req.camera_info
+
+        ipdb.set_trace()
 
         # Wrap the camera info in a BerkeleyAutomation/perception
         # `CameraIntrinsics` object.
@@ -250,6 +253,7 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
 
 
 if __name__ == "__main__":
+
     # Initialize the ROS node.
     rospy.init_node("Dexnet_Grasp_Planner")
 

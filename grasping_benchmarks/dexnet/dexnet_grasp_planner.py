@@ -55,6 +55,7 @@ from gqcnn.utils import GripperMode, NoValidGraspsException
 from grasping_benchmarks.base import transformations
 from grasping_benchmarks.base.base_grasp_planner import BaseGraspPlanner, CameraData
 from grasping_benchmarks.base.grasp import Grasp6D
+import ipdb
 
 
 class DexnetGraspPlanner(BaseGraspPlanner):
@@ -184,7 +185,7 @@ class DexnetGraspPlanner(BaseGraspPlanner):
         Returns:
             CameraData: object that stores the input data required by plan_grasp()
         """
-
+        ipdb.set_trace()
         camera_data = CameraData()
 
         # Create images
@@ -269,6 +270,7 @@ class DexnetGraspPlanner(BaseGraspPlanner):
         return cam_T_grasp
 
     def plan_grasp(self, camera_data, n_candidates=1):
+        ipdb.set_trace()
         """Grasp planner.
 
         Parameters
@@ -327,6 +329,7 @@ class DexnetGraspPlanner(BaseGraspPlanner):
 
         # --- Create an `RgbdImageState` with the cropped `RgbdImage` and `CameraIntrinsics` --- #
         rgbd_state = RgbdImageState(rgbd_im, camera_data.intrinsic_params, segmask=segmask)
+        ipdb.set_trace()
 
         # --- Execute policy --- #
         try:

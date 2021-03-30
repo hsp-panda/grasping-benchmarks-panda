@@ -146,13 +146,35 @@ class GraspnetGraspPlannerService(GraspnetGraspPlanner):
             pc_edited.append(p_out)
 
         ipdb.set_trace()
-
         # --- create CameraData struct --- #
         camera_data = CameraData()
         camera_data.rgb_img = color_im
         camera_data.depth_img = depth_im
         camera_data.intrinsic_params = camera_intr
         camera_data.point_cloud = pc_edited
+
+
+
+        # # #########show point cloud ###################
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # ax.scatter3D(0, 0, 0,  s=2 )
+        # prova = np.array(pc_edited)
+        # #prova = prova[::10,:]
+        # ax.scatter3D(prova[:,0], prova[:,1], prova[:,2], s=1 )
+        # ax.set_xlabel('x')
+        # ax.set_ylabel('y')
+        # ax.set_zlabel('z')
+        # ax.set_xlim3d(0.2, 0.8)
+        # ax.set_ylim3d(-0.3, 0.3)
+        # ax.set_zlim3d(-0.2, 0.4)
+        # #ax.axis('equal')
+        # plt.show()
+
+        # # ###########################
+ 
+
 
         ipdb.set_trace()
         return camera_data

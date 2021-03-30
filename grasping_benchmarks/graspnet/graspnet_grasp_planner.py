@@ -325,44 +325,57 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
             self.cfg
             npy_file = '/home/aaltobelli/pytorch6dofgraspnet/demo/data/cheezit.npy'
             data = np.load(npy_file, allow_pickle=True, encoding="latin1").item()
-            # data['depth'] = camera_data.depth_img.data
-            # data['image'] = camera_data.rgb_img.data
-            # data['intrinsics_matrix'] = camera_data.intrinsic_params.proj_matrix
-            # data['base_to_camera_rt'] = 'base_to_camera_rt'
-            # #data['smoothed_object_pc'] = np.array(camera_data.point_cloud)
-            # test = np.array(camera_data.point_cloud)
-            # data['smoothed_object_pc'] = test[1000]
+            data['depth'] = camera_data.depth_img.data
+            data['image'] = camera_data.rgb_img.data
+            data['intrinsics_matrix'] = camera_data.intrinsic_params.proj_matrix
+            data['base_to_camera_rt'] = 'base_to_camera_rt'
+            # data['smoothed_object_pc'] = np.array(camera_data.point_cloud)
+            test = np.array(camera_data.point_cloud)
+            data['smoothed_object_pc'] = test
 
-            # pytorch6dofgraspnet.demo.graspnetFuncs.graspnetfuncs(self.graspnet_cfg,data)
+        #     ###### only to show all the grasp poses #####
+        #     grasps, q_values = pytorch6dofgraspnet.demo.graspnetFuncs.graspnetfuncs(self.cfg,data)
 
-            # grasps_and_predictions = self.execute_policy(rgbd_state, self.grasping_policy,
-            #                                          camera_data.intrinsic_params.frame,
-            #                                          n_candidates)
+        #     ipdb.set_trace()
+        #     objectPointCloud = np.array(self._camera_data.point_cloud)
+        #     pc_colors = np.array([[255,0,0],]*objectPointCloud.shape[0])
+        #     pytorch6dofgraspnet.demo.graspnetFuncs.simple_draw_scene(
+        #         objectPointCloud,
+        #         pc_color=pc_colors,
+        #         grasps=grasps,
+        #         grasp_scores=q_values,
+        #     )
+
+        #    #############################################
+
+
+ 
             grasps_and_predictions = self.execute_policy(self.cfg,data,n_candidates)
 
             self._graspnet_gp = grasps_and_predictions
 
                         # --- project planar grasps to 3D space --- #
-            l = []
+            grasp_list = []
+
+            # grasp_poses_array = np.eye(4)
             for gp in grasps_and_predictions:
 
                 # my method
                 ipdb.set_trace()
-                #pose_6d = self.transform_grasp_to_6D(gp[0], camera_data.intrinsic_params)
                 pos = gp[0][0:3,3]
                 rot = gp[0][0:3,0:3]
                 grasp_6D = Grasp6D(position=pos, rotation=rot,
                                    width=0, score= gp[1],
                                    ref_frame=camera_data.intrinsic_params.frame)
-
-                l.append(grasp_6D)
+                grasp_list.append(grasp_6D)
 
                 # dexnet method --> needs autolab_core installed as catkin package
                 # 6D_gp = gp[0].pose()
 
+
             ipdb.set_trace()
-            self.grasp_poses = l
-            self.best_grasp = l[0]
+            self.grasp_poses = grasp_list
+            self.best_grasp = grasp_list[0]
 
             self.visualize()
             ipdb.set_trace()
@@ -396,15 +409,18 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
              
             #vis.grasp(self._graspnet_gp[0][0], scale=2.5, show_center=True, show_axis=True)
 
+            ############### 
             npy_file = '/home/aaltobelli/pytorch6dofgraspnet/demo/data/cheezit.npy'
             data = np.load(npy_file, allow_pickle=True, encoding="latin1").item()
+            ############################################
             
+            # ###########
+            data['depth'] = self._camera_data.depth_img.data
+            data['image'] = self._camera_data.rgb_img.data
+            data['intrinsics_matrix'] = self._camera_data.intrinsic_params.proj_matrix
             depth = data['depth']
             image = data['image']
             K = data['intrinsics_matrix']
-            # Removing points that are farther than 1 meter or missing depth
-            # values.
-            #depth[depth == 0 or depth > 1] = np.nan
 
             np.nan_to_num(depth, copy=False)
             mask = np.where(np.logical_or(depth == 0, depth > 1))
@@ -422,8 +438,18 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
                            
             generated_scores = [self.best_grasp.score]
 
+            # pytorch6dofgraspnet.demo.graspnetFuncs.simple_draw_scene(
+            #     pc,
+            #     pc_color=pc_colors,
+            #     grasps=generated_grasps,
+            #     grasp_scores=generated_scores,
+            # )
+
+            ipdb.set_trace()
+            objectPointCloud = np.array(self._camera_data.point_cloud)
+            pc_colors = np.array([[255,0,0],]*objectPointCloud.shape[0])
             pytorch6dofgraspnet.demo.graspnetFuncs.simple_draw_scene(
-                pc,
+                objectPointCloud,
                 pc_color=pc_colors,
                 grasps=generated_grasps,
                 grasp_scores=generated_scores,
