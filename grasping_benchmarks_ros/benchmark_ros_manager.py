@@ -338,7 +338,7 @@ class GraspingBenchmarksManager(object):
             print("cam_T_grasp\n ", cam_T_grasp)
             print("w_T_grasp\n ", w_T_grasp)
 
-        elif self._grasp_planner_srv is GraspPlannerCloud:
+        elif self._grasp_planner_srv is GraspPlannerCloud or GraspPlannerImageAndCloud:
             # In this case, there is no need to change the grasp pose reference frame
 
             w_T_grasp = np.eye(4)

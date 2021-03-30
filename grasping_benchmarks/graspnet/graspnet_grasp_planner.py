@@ -488,7 +488,8 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
 
         grasps_and_predictions = []
         for g, q in zip(grasps, q_values):
-            grasps_and_predictions.append( [g,q] )
+            if g[2,3]>=0.19: 
+               grasps_and_predictions.append( [g,q] )
 
         sorted_grasps_and_predictions = sorted(grasps_and_predictions, key=lambda x: x[1], reverse=True)
 
