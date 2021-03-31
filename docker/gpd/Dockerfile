@@ -40,6 +40,7 @@ RUN apt-get update &&\
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - && \
     apt-add-repository "deb https://apt.kitware.com/ubuntu/ `lsb_release -cs` main" &&\
     add-apt-repository ppa:ubuntu-toolchain-r/test &&\
+    add-apt-repository "deb http://security.ubuntu.com/ubuntu xenial-security main" && \
     apt-get update &&\
     apt-get install -y --no-install-recommends --fix-missing\
         gcc-8 \
@@ -163,7 +164,7 @@ RUN mkdir -p ${WS_SOURCES} &&\
 RUN apt-get update &&\
     apt-get install -y\
     libvtk7* &&\
-    rm -rf /var/lib/apt/lists/* 
+    rm -rf /var/lib/apt/lists/*
 
 # Install PCL
 # ===========
@@ -278,7 +279,7 @@ RUN --mount=type=ssh cd ${CATKIN_WS_DIR}/src &&\
 
 RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
     find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ 
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Nvidia runtime support
 ENV NVIDIA_VISIBLE_DEVICES=all
