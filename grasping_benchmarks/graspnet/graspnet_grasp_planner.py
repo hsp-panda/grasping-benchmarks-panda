@@ -61,8 +61,7 @@ import ipdb
 import sys
 sys.path.append(r'/home/aaltobelli/')
 sys.path.append(r'/home/aaltobelli/pytorch6dofgraspnet/')
-sys.path.append(r'/home/aaltobelli/.local/lib/python3.6/site-packages/traitsui/qt4/__init__.py')
-sys.path.append(r'/home/aaltobelli/.local/lib/python3.6/site-packages/pyface/ui/qt4/init.py')
+
 
 
 import pytorch6dofgraspnet.grasp_estimator
@@ -323,15 +322,8 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
         try:
             ipdb.set_trace()
             self.cfg
-            npy_file = '/home/aaltobelli/pytorch6dofgraspnet/demo/data/cheezit.npy'
-            data = np.load(npy_file, allow_pickle=True, encoding="latin1").item()
-            data['depth'] = camera_data.depth_img.data
-            data['image'] = camera_data.rgb_img.data
-            data['intrinsics_matrix'] = camera_data.intrinsic_params.proj_matrix
-            data['base_to_camera_rt'] = 'base_to_camera_rt'
-            # data['smoothed_object_pc'] = np.array(camera_data.point_cloud)
-            test = np.array(camera_data.point_cloud)
-            data['smoothed_object_pc'] = test
+            data = {'depth':camera_data.depth_img.data, 'image':camera_data.rgb_img.data, 'intrinsics_matrix':camera_data.intrinsic_params.proj_matrix, 'base_to_camera_rt':'base_to_camera_rt', 'smoothed_object_pc':np.array(camera_data.point_cloud) }
+            
 
         #     ###### only to show all the grasp poses #####
         #     grasps, q_values = pytorch6dofgraspnet.demo.graspnetFuncs.graspnetfuncs(self.cfg,data)
@@ -409,18 +401,18 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
              
             #vis.grasp(self._graspnet_gp[0][0], scale=2.5, show_center=True, show_axis=True)
 
-            ############### 
-            npy_file = '/home/aaltobelli/pytorch6dofgraspnet/demo/data/cheezit.npy'
-            data = np.load(npy_file, allow_pickle=True, encoding="latin1").item()
-            ############################################
-            
-            # ###########
-            data['depth'] = self._camera_data.depth_img.data
-            data['image'] = self._camera_data.rgb_img.data
-            data['intrinsics_matrix'] = self._camera_data.intrinsic_params.proj_matrix
+            data = {'depth':self._camera_data.depth_img.data, 'image':self._camera_data.rgb_img.data, 'intrinsics_matrix':self._camera_data.intrinsic_params.proj_matrix, 'base_to_camera_rt':'base_to_camera_rt' }
+                        
+            # # ###########
+            # data['depth'] = self._camera_data.depth_img.data
+            # data['image'] = self._camera_data.rgb_img.data
+            # data['intrinsics_matrix'] = self._camera_data.intrinsic_params.proj_matrix
+
             depth = data['depth']
             image = data['image']
             K = data['intrinsics_matrix']
+
+
 
             np.nan_to_num(depth, copy=False)
             mask = np.where(np.logical_or(depth == 0, depth > 1))
@@ -487,7 +479,9 @@ class GraspnetGraspPlanner(BaseGraspPlanner):
         print("Total grasp planning time: {} secs.".format(str(time.time() - grasp_planning_start_time)))
 
         grasps_and_predictions = []
+        tfTPC = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.1],[0,0,0,1]])
         for g, q in zip(grasps, q_values):
+            g = np.matmul(g,tfTPC)
             if g[2,3]>=0.19: 
                grasps_and_predictions.append( [g,q] )
 
