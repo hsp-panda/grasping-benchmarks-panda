@@ -75,7 +75,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa &&\
         python3-numpy \
         &&\
     rm -rf /var/lib/apt/lists/*
-
+RUN python3 -m pip install --upgrade pip
 
 # Install ROS Desktop Full
 # ========================
@@ -161,7 +161,7 @@ RUN cd ${WS_SOURCES} &&\
     cd gqcnn/ &&\
     chmod +x scripts/downloads/models/download_models.sh &&\
     ./scripts/downloads/models/download_models.sh &&\
-    pip3 install gqcnn/  &&\
+    pip3 install .  &&\
     find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Create catkin_ws with dependencies/ros packages for python3
@@ -182,10 +182,10 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 # Install benchmark-grasping
 # ==========================
 
-RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+#RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-RUN --mount=type=ssh cd ${CATKIN_WS_DIR}/src &&\
-    git clone git@github.com:robotology/grasping-benchmarks-panda.git &&\
+RUN cd ${CATKIN_WS_DIR}/src &&\
+    git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF && \
