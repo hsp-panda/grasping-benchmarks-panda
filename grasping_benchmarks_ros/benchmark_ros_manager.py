@@ -73,11 +73,11 @@ class GraspingBenchmarksManager(object):
         rospy.loginfo("...Connected with service {}".format(grasp_planner_service_name))
 
         # # --- panda service --- #
-        # panda_service_name =  "/panda_grasp_server/panda_grasp"
-        # rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
-        # rospy.wait_for_service(panda_service_name, timeout=60.0)
-        # self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
-        # rospy.loginfo("...Connected with service {}".format(panda_service_name))
+        panda_service_name =  "/panda_grasp_server/panda_grasp"
+        rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
+        rospy.wait_for_service(panda_service_name, timeout=60.0)
+        self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
+        rospy.loginfo("...Connected with service {}".format(panda_service_name))
 
         # --- subscribers to camera topics --- #
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
