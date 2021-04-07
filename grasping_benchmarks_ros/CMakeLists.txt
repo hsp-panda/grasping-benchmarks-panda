@@ -6,12 +6,6 @@ project(grasping_benchmarks_ros)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS cmake_modules eigen_conversions message_generation roscpp rospy tf2_ros sensor_msgs std_msgs geometry_msgs)
 
-option(GPD_ROS "Compile gpd ros" OFF)
-if(GPD_ROS)
-	add_subdirectory(gpd_ros)
-endif()
-
-
 ################################################
 ## Declare ROS messages, services and actions ##
 ################################################
@@ -33,6 +27,10 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(DEPENDENCIES sensor_msgs std_msgs geometry_msgs)
 
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+include_directories(${catkin_INCLUDE_DIRS})
+
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -46,10 +44,7 @@ catkin_package(
   CATKIN_DEPENDS cmake_modules message_runtime eigen_conversions roscpp rospy tf2_ros sensor_msgs std_msgs geometry_msgs
 )
 
-###########
-## Build ##
-###########
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(${catkin_INCLUDE_DIRS})
+option(GPD_ROS "Compile gpd ros" OFF)
+if(GPD_ROS)
+  add_subdirectory(gpd_ros)
+endif()
