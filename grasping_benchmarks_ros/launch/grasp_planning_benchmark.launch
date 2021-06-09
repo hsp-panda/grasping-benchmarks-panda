@@ -20,7 +20,7 @@
     <arg name="grasp_planner_service"             default="GraspPlanner" />
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
 
-    <arg name="model_dir"                         default="/home/icub/workspace/gqcnn/models" />
+    <arg name="model_dir"                         default="/workspace/sources/gqcnn/models" />
     <arg name="fully_conv"                        default="false" />
     <arg name="model_name"                        default="FC-GQCNN-4.0-PJ" if="$(eval fully_conv == true)" />
     <arg name="model_name"                        default="GQCNN-4.0-PJ" if="$(eval fully_conv == false)" />
