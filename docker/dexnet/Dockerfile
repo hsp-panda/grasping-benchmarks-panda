@@ -89,10 +89,7 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
         > /etc/apt/sources.list.d/ros-latest.list &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends \
-        # ros-${ROS_DISTRO}-desktop \
         ros-${ROS_DISTRO}-desktop-full \
-        #ros-${ROS_DISTRO}-fake-localization \
-        #ros-${ROS_DISTRO}-map-server \
         python-rosdep \
         python-rosinstall \
         python-rosinstall-generator \
@@ -117,8 +114,7 @@ ENV WS_SOURCES=${WS_DIR}/sources
 ARG WS_BIN=${WS_SOURCES}/bin
 
 # Create a new runtimeusers group
-RUN groupadd -K GID_MIN=900 -K GID_MAX=1100 runtimeusers 
-
+RUN groupadd -K GID_MIN=900 -K GID_MAX=1100 runtimeusers
 
 # Install Dexnet dependencies
 # ===========================
@@ -147,11 +143,11 @@ RUN apt-get update && \
     gputil \
     psutil \
     opencv-python \
+    autolab-perception==0.0.8 \
     autolab-core \
-    autolab-perception \
     visualization \
     &&\
-    rm -rf /var/lib/apt/lists/* 
+    rm -rf /var/lib/apt/lists/*
 
 
 # Install GQCNN
