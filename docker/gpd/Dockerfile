@@ -109,8 +109,8 @@ RUN add-apt-repository ppa:deadsnakes/ppa &&\
 # https://github.com/osrf/docker_images/blob/master/ros/
 ENV ROS_DISTRO=melodic
 
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
-                --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 &&\
+RUN apt-key adv --keyserver keyserver.ubuntu.com \
+                --recv-keys F42ED6FBAB17C654 &&\
     echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" \
         > /etc/apt/sources.list.d/ros-latest.list &&\
     apt-get update &&\
@@ -256,25 +256,20 @@ RUN apt-get update &&\
     wstool set -y src/perception_pcl --git https://github.com/ros-perception/perception_pcl.git -v melodic-devel &&\
     wstool up &&\
     rosdep update && rosdep install --from-paths src --ignore-src -y -r --skip-keys "libpcl-all-dev"&&\
-    rm -rf /var/lib/apt/lists/* &&\
-    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DPCL_DIR=${WS_INSTALL}/share/pcl-1.9 && \
-    catkin build  -j8 && \
-    echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
-    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+    rm -rf /var/lib/apt/lists/*
 
 # Install benchmark-grasping
 # ==========================
 
-#RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-
 RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
-    cd ${CATKIN_WS_DIR} &&\
-    # catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=ON -DPCL_DIR=${WS_INSTALL}/share/pcl-1.9 && \
+    cd ${CATKIN_WS_DIR} && \
+    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=ON -DPCL_DIR=${WS_INSTALL}/share/pcl-1.9
     catkin build  -j8 && \
-    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
-
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
+    echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
+    echo 'export LD_LIBRARY_PATH=${WS_INSTALL}/lib:${LD_LIBRARY_PATH}' >> /etc/bash.bashrc
 
 # =============
 # FIX OWNERSHIP

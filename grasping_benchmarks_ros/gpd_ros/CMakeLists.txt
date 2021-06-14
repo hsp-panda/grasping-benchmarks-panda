@@ -13,7 +13,7 @@ else()
   message(FATAL_ERROR "Library GPD not found")
 endif()
 
-set(GPD_LIB_INCLUDE_DIR $ENV{INSTALL_DIR}/include)
+set(GPD_LIB_INCLUDE_DIR ${INSTALL_DIR}/include)
 include_directories(${GPD_LIB_INCLUDE_DIR})
 message(STATUS "gpd_include_dir: ${GPD_LIB_INCLUDE_DIR}")
 

@@ -83,8 +83,8 @@ RUN python3 -m pip install --upgrade pip
 # https://github.com/osrf/docker_images/blob/master/ros/
 ENV ROS_DISTRO=melodic
 
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
-                --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654 &&\
+RUN apt-key adv --keyserver keyserver.ubuntu.com \
+                --recv-keys F42ED6FBAB17C654 &&\
     echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" \
         > /etc/apt/sources.list.d/ros-latest.list &&\
     apt-get update &&\
