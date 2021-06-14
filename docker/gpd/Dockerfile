@@ -253,10 +253,11 @@ RUN apt-get update &&\
     wstool init &&\
     wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
     wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
+    wstool set -y src/perception_pcl --git https://github.com/ros-perception/perception_pcl.git -v melodic-devel &&\
     wstool up &&\
-    rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
+    rosdep update && rosdep install --from-paths src --ignore-src -y -r --skip-keys "libpcl-all-dev"&&\
     rm -rf /var/lib/apt/lists/* &&\
-    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
+    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DPCL_DIR=${WS_INSTALL}/share/pcl-1.9 && \
     catkin build  -j8 && \
     echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
@@ -270,7 +271,7 @@ RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
-    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=ON && \
+    # catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=ON -DPCL_DIR=${WS_INSTALL}/share/pcl-1.9 && \
     catkin build  -j8 && \
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 

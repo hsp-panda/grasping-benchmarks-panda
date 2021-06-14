@@ -5,7 +5,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 ## System dependencies are found with CMake's conventions
-set(INSTALL_DIR $ENV{INSTALL_DIR})
+set(INSTALL_DIR $ENV{WS_INSTALL})
 find_library(GPD_LIB NAMES gpd PATHS /usr/local/lib ${INSTALL_DIR} PATH_SUFFIXES lib NO_DEFAULT_PATH)
 if (GPD_LIB)
   message(STATUS "Library GPD found in ${GPD_LIB}")
