@@ -1,7 +1,20 @@
-# request params
+# request params for grasp planners (not all of these must be filled in)
+
+# color and depth images
 sensor_msgs/Image color_image
 sensor_msgs/Image depth_image
+
+# camera info and intrinsics
 sensor_msgs/CameraInfo camera_info
+
+# pointcloud and viewpoint
+sensor_msgs/PointCloud2 cloud
+geometry_msgs/PoseStamped view_point # where the point cloud was acquired. Default is origin
+
+# number of candidates to return
+int16 n_of_candidates
+
 ---
+
 # response params
-BenchmarkGrasp grasp
+BenchmarkGrasp[] grasp_candidates

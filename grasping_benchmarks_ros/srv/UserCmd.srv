@@ -1,5 +1,5 @@
 # request params
-std_msgs/String cmd # options: 'grasp'
+std_msgs/String cmd # options: "grasp", "get_candidates", "abort"
 ---
 # response params
 std_msgs/Bool is_success

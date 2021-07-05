@@ -21,7 +21,6 @@ add_service_files(
   FILES
   UserCmd.srv
   GraspPlanner.srv
-  GraspPlannerCloud.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

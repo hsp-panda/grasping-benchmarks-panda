@@ -10,6 +10,10 @@ import math
 import os
 import time
 
+from grasping_benchmarks.base import grasp
+from grasping_benchmarks.base.transformations import matrix_to_quaternion, quaternion_to_matrix
+from numpy.core.multiarray import result_type
+
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import rospy
@@ -29,6 +33,8 @@ from grasping_benchmarks.base.base_grasp_planner import CameraData
 
 from grasping_benchmarks.dexnet.dexnet_grasp_planner import DexnetGraspPlanner
 
+DEBUG = True
+
 
 class DexnetGraspPlannerService(DexnetGraspPlanner):
     def __init__(self, model_file, fully_conv, grasp_offset, cv_bridge, grasp_service_name, grasp_publisher_name):
@@ -45,6 +51,8 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
 
         super(DexnetGraspPlannerService, self).__init__(model_file, fully_conv, grasp_offset)
 
+        self.camera_viewpoint = PoseStamped()
+
         self.cv_bridge = cv_bridge
 
         # Create publisher to publish pose of final grasp.
@@ -55,6 +63,7 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
         # Initialize the ROS service.
         self._grasp_planning_service = rospy.Service(grasp_service_name, GraspPlanner,
                                             self.plan_grasp_handler)
+
 
 
     def read_images(self, req):
@@ -141,10 +150,13 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
         """
         camera_data = self.read_images(req)
 
+        n_of_candidates = req.n_of_candidates if req.n_of_candidates else 1
+
         self.grasp_poses = []
-        ok = self.plan_grasp(camera_data, n_candidates=1)
+        ok = self.plan_grasp(camera_data, n_candidates=n_of_candidates)
 
         if ok:
+            self.camera_viewpoint = req.view_point
             return self._create_grasp_planner_srv_msg()
         else:
             return None
@@ -159,11 +171,13 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
         """
         camera_data = self.read_images(req)
 
+        n_of_candidates = req.n_of_candidates if req.n_of_candidates else 1
+
         camera_data.bounding_box = {'min_x': req.bounding_box.minX, 'min_y': req.bounding_box.minY,
                                     'max_x': req.bounding_box.maxX, 'max_y': req.bounding_box.maxY}
 
         self.grasp_poses = []
-        ok = self.plan_grasp(camera_data, n_candidates=1)
+        ok = self.plan_grasp(camera_data, n_candidates=n_of_candidates)
 
         if ok:
             return self._create_grasp_planner_srv_msg()
@@ -181,6 +195,8 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
 
         camera_data = self.read_images(req)
         raw_segmask = req.segmask
+
+        n_of_candidates = req.n_of_candidates if req.n_of_candidates else 1
 
         # create segmentation mask
         try:
@@ -202,52 +218,111 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
             raise rospy.ServiceException(msg)
 
         self.grasp_poses = []
-        ok = self.plan_grasp(camera_data, n_candidates=1)
+        ok = self.plan_grasp(camera_data, n_candidates=n_of_candidates)
 
         if ok:
             return self._create_grasp_planner_srv_msg()
         else:
             return None
 
-    def _create_grasp_planner_srv_msg(self):
+    def transform_grasp_to_world(self, grasp_pose, camera_viewpoint):
+        """Refer the grasp pose to 6D, if the camera viewpoint is given
 
+        Parameters
+        ---------
+        grasp_pose: geometry_msgs/PoseStamped
+            The candidate to transform
+        camera_viewpoint: geometry_msgs/PoseStamped
+            The camera viewpoint wrt world reference frame
+
+        Returns
+        -------
+            geometry_msgs/PoseStamped
+            The candidate in the world reference frame
+        """
+        # Need to tranform the grasp pose from camera frame to world frame
+        # w_T_cam : camera pose in world ref frame
+        # cam_T_grasp : grasp pose in camera ref frame
+        # w_T_grasp = w_T_cam * cam_T_grasp
+
+        # Construct the 4x4 affine transf matrices from ROS poses
+        grasp_quat = grasp_pose.pose.orientation
+        grasp_pos = grasp_pose.pose.position
+        cam_T_grasp = np.eye(4)
+        cam_T_grasp[:3,:3] = quaternion_to_matrix([grasp_quat.x,
+                                                   grasp_quat.y,
+                                                   grasp_quat.z,
+                                                   grasp_quat.w])
+        cam_T_grasp[:3,3] = np.array([grasp_pos.x, grasp_pos.y, grasp_pos.z])
+
+        cam_quat = camera_viewpoint.pose.orientation
+        cam_pos = camera_viewpoint.pose.position
+        w_T_cam = np.eye(4)
+        w_T_cam[:3,:3] = quaternion_to_matrix([cam_quat.x,
+                                               cam_quat.y,
+                                               cam_quat.z,
+                                               cam_quat.w])
+        w_T_cam[:3,3] = np.array([cam_pos.x, cam_pos.y, cam_pos.z])
+
+        # Obtain the w_T_grasp affine transformation
+        w_T_grasp = np.matmul(w_T_cam, cam_T_grasp)
+
+        if DEBUG:
+            print("[DEBUG] Grasp pose reference system transform")
+            print("w_T_cam\n ", w_T_cam)
+            print("cam_T_grasp\n ", cam_T_grasp)
+            print("w_T_grasp\n ", w_T_grasp)
+
+
+        # Create and return a StampedPose object
+        w_T_grasp_quat = matrix_to_quaternion(w_T_grasp[:3,:3])
+        result_pose = PoseStamped()
+        result_pose.pose.orientation.x = w_T_grasp_quat[0]
+        result_pose.pose.orientation.y = w_T_grasp_quat[1]
+        result_pose.pose.orientation.z = w_T_grasp_quat[2]
+        result_pose.pose.orientation.w = w_T_grasp_quat[3]
+        result_pose.pose.position.x = w_T_grasp[0,3]
+        result_pose.pose.position.y = w_T_grasp[1,3]
+        result_pose.pose.position.z = w_T_grasp[2,3]
+        result_pose.header = camera_viewpoint.header
+
+        return result_pose
+
+    def _create_grasp_planner_srv_msg(self):
 
         if len(self.grasp_poses) == 0:
             return False
 
-        # --- Create `BenchmarkGrasp` return message --- #
-        grasp_msg = BenchmarkGrasp()
+        # --- Create `BenchmarkGrasp` list return message --- #
+        grasp_msg = []
+        for grasp_candidate in self.grasp_poses:
+            # --- Set the pose in PoseStamped format --- #
+            # Grasp poses are grasp.Grasp6D
+            p = PoseStamped()
+            p.header.frame_id = grasp_candidate.ref_frame
+            p.header.stamp = rospy.Time.now()
+            p.pose.position.x = grasp_candidate.position[0]
+            p.pose.position.y = grasp_candidate.position[1]
+            p.pose.position.z = grasp_candidate.position[2]
+            p.pose.orientation.w = grasp_candidate.quaternion[3]
+            p.pose.orientation.x = grasp_candidate.quaternion[0]
+            p.pose.orientation.y = grasp_candidate.quaternion[1]
+            p.pose.orientation.z = grasp_candidate.quaternion[2]
+            grasp_candidate.pose = self.transform_grasp_to_world(p)
 
-        # set pose...
-        p = PoseStamped()
-        p.header.frame_id = self.best_grasp.ref_frame
-        p.header.stamp = rospy.Time.now()
+            # --- Set the candidate quality score and width --- #
+            grasp_candidate.score.data = grasp_candidate.score
+            grasp_candidate.width.data = grasp_candidate.width
 
-        p.pose.position.x = self.best_grasp.position[0]
-        p.pose.position.y = self.best_grasp.position[1]
-        p.pose.position.z = self.best_grasp.position[2]
-
-        p.pose.orientation.w = self.best_grasp.quaternion[3]
-        p.pose.orientation.x = self.best_grasp.quaternion[0]
-        p.pose.orientation.y = self.best_grasp.quaternion[1]
-        p.pose.orientation.z = self.best_grasp.quaternion[2]
-
-        grasp_msg.pose = p
-
-        # ...score
-        grasp_msg.score.data = self.best_grasp.score
-
-        # ... and width
-        grasp_msg.width.data = self.best_grasp.width
+            grasp_msg.append(grasp_candidate)
 
         if self.grasp_pose_publisher is not None:
-            # Publish the pose alone for easy visualization of grasp
-            # pose in Rviz.
-            print("publish grasp!! .")
-            self.grasp_pose_publisher.publish(p)
+            # --- Publish poses for visualization on Rviz ---#
+            # TODO: properly publish all the poses
+            print("Publishing grasps on topic")
+            self.grasp_pose_publisher.publish(grasp_msg[0])
 
         return grasp_msg
-
 
 if __name__ == "__main__":
     # Initialize the ROS node.
