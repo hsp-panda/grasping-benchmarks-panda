@@ -1,5 +1,5 @@
 # This message describes a 2-finger grasp configuration by its 6-DOF pose
-# expressed wrt to the camera frame, and the opening
+# expressed wrt to the world reference frame, and the opening
 # width of the robot hand.
 
 geometry_msgs/PoseStamped pose # grasp pose
