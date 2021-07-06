@@ -26,7 +26,7 @@ from visualization import Visualizer2D as vis
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Header
 
-from grasping_benchmarks_ros.srv import GraspPlanner
+from grasping_benchmarks_ros.srv import GraspPlanner, GraspPlannerRequest, GraspPlannerResponse
 from grasping_benchmarks_ros.msg import BenchmarkGrasp
 
 from grasping_benchmarks.base.base_grasp_planner import CameraData
@@ -290,14 +290,16 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
 
     def _create_grasp_planner_srv_msg(self):
 
+        response = GraspPlannerResponse()
+
         if len(self.grasp_poses) == 0:
             return False
 
         # --- Create `BenchmarkGrasp` list return message --- #
-        grasp_msg = []
         for grasp_candidate in self.grasp_poses:
             # --- Set the pose in PoseStamped format --- #
             # Grasp poses are grasp.Grasp6D
+            grasp_msg = BenchmarkGrasp()
             p = PoseStamped()
             p.header.frame_id = grasp_candidate.ref_frame
             p.header.stamp = rospy.Time.now()
@@ -308,21 +310,21 @@ class DexnetGraspPlannerService(DexnetGraspPlanner):
             p.pose.orientation.x = grasp_candidate.quaternion[0]
             p.pose.orientation.y = grasp_candidate.quaternion[1]
             p.pose.orientation.z = grasp_candidate.quaternion[2]
-            grasp_candidate.pose = self.transform_grasp_to_world(p)
+            grasp_msg.pose = self.transform_grasp_to_world(p, self.camera_viewpoint)
 
             # --- Set the candidate quality score and width --- #
-            grasp_candidate.score.data = grasp_candidate.score
-            grasp_candidate.width.data = grasp_candidate.width
+            grasp_msg.score.data = grasp_candidate.score
+            grasp_msg.width.data = grasp_candidate.width
 
-            grasp_msg.append(grasp_candidate)
+            response.grasp_candidates.append(grasp_msg)
 
         if self.grasp_pose_publisher is not None:
             # --- Publish poses for visualization on Rviz ---#
             # TODO: properly publish all the poses
             print("Publishing grasps on topic")
-            self.grasp_pose_publisher.publish(grasp_msg[0])
+            # self.grasp_pose_publisher.publish(response.grasp_candidates[0].pose)
 
-        return grasp_msg
+        return response
 
 if __name__ == "__main__":
     # Initialize the ROS node.

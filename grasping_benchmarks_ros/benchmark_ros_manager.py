@@ -47,10 +47,10 @@ NEW_MSG = {
 }
 
 # TODO: find a way to define the grasp service depending on the type of grasp planner
-GRASP_PLANNER_SRV = {
-    'GraspPlanner': GraspPlanner,
-    'GraspPlannerCloud': GraspPlannerCloud,
-    }
+# GRASP_PLANNER_SRV = {
+#     'GraspPlanner': GraspPlanner,
+#     'GraspPlannerCloud': GraspPlannerCloud,
+#     }
 
 
 class GraspingBenchmarksManager(object):
@@ -63,7 +63,7 @@ class GraspingBenchmarksManager(object):
 
         # --- grasp planner service --- #
         # TODO: I guess we can get rid of this one
-        self._grasp_planner_srv = GRASP_PLANNER_SRV[grasp_planner_service]
+        # self._grasp_planner_srv = GRASP_PLANNER_SRV[grasp_planner_service]
 
         rospy.loginfo("GraspingBenchmarksManager: Waiting for grasp planner service...")
         rospy.wait_for_service(grasp_planner_service_name, timeout=30.0)
@@ -213,7 +213,7 @@ class GraspingBenchmarksManager(object):
             if req.cmd.data == "grasp":
                 return self.execute_grasp(self.get_best_grasp(reply.grasp_candidates), self._camera_pose)
             else:
-                return self.dump_grasps(reply.grasp_candidates, self._camera_pose)
+                return self.dump_grasps(reply.grasp_candidates)
 
         elif req.cmd.data == "abort":
             self._abort = True
@@ -235,9 +235,9 @@ class GraspingBenchmarksManager(object):
         import os
         dump_dir_base = '/workspace/dump_'
         dump_dir_idx = 0
-        while (os.path.exists(dump_dir_base+dump_dir_idx)):
+        while (os.path.exists(dump_dir_base+str(dump_dir_idx))):
             dump_dir_idx+=1
-        dump_dir = dump_dir_base + dump_dir_idx
+        dump_dir = dump_dir_base + str(dump_dir_idx)
         os.mkdir(dump_dir)
         poses_filename = os.path.join(dump_dir, 'grasp_candidates.txt')
         scores_filename = os.path.join(dump_dir,'grasp_candidates_scores.txt')
@@ -246,15 +246,15 @@ class GraspingBenchmarksManager(object):
         with open(poses_filename,'w') as poses_file, open(scores_filename,'w') as scores_file:
             # For each candidate, get the 4x4 affine matrix first
             for candidate in grasps:
-                candidate = BenchmarkGrasp()
                 candidate_pose_orientation = candidate.pose.pose.orientation
                 candidate_pose_position = candidate.pose.pose.position
+                import ipdb; ipdb.set_trace()
                 candidate_pose_score = candidate.score.data
                 candidate_pose_affine = np.eye(4)
-                candidate_pose_affine[:3, :3] = quaternion_to_matrix(candidate_pose_orientation.x,
-                                                                    candidate_pose_orientation.y,
-                                                                    candidate_pose_orientation.z,
-                                                                    candidate_pose_orientation.w)
+                candidate_pose_affine[:3, :3] = quaternion_to_matrix([candidate_pose_orientation.x,
+                                                                      candidate_pose_orientation.y,
+                                                                      candidate_pose_orientation.z,
+                                                                      candidate_pose_orientation.w])
                 candidate_pose_affine[:3, 3] = np.array([candidate_pose_position.x,
                                                         candidate_pose_position.y,
                                                         candidate_pose_position.z])
@@ -274,6 +274,8 @@ class GraspingBenchmarksManager(object):
 
                 score_string = '{}\n'.format(str(candidate_pose_score))
                 scores_file.write(score_string)
+
+        return Bool(True)
 
     def execute_grasp(self, grasp):
         """Assumes the grasp pose is already in the root reference frame
