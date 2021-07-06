@@ -15,6 +15,7 @@ Its features are:
 (4. assess if the grasp was successful or not)
 """
 
+
 import rospy
 import warnings
 import message_filters
@@ -228,7 +229,44 @@ class GraspingBenchmarksManager(object):
 
     def dump_grasps(self, grasps:list):
 
+        poses_filename = 'grasp_candidates.txt'
+        scores_filename = 'grasp_candidates_scores.txt'
+        width_filename = 'grasp_candidates_width.txt'
+
+        with open('poses_filename') as poses_file:
+            # For each candidate, get the 4x4 affine matrix first
+            for candidate in grasps:
+                candidate = BenchmarkGrasp()
+                candidate_pose_orientation = candidate.pose.pose.orientation
+                candidate_pose_position = candidate.pose.pose.position
+                candidate_pose_score = candidate.score.data
+                candidate_pose_affine = np.eye(4)
+                candidate_pose_affine[:3, :3] = quaternion_to_matrix(candidate_pose_orientation.x,
+                                                                    candidate_pose_orientation.y,
+                                                                    candidate_pose_orientation.z,
+                                                                    candidate_pose_orientation.w)
+                candidate_pose_affine[:3, 3] = np.array([candidate_pose_position.x,
+                                                        candidate_pose_position.y,
+                                                        candidate_pose_position.z])
+for idx in range(candidate_pose_affine.shape[0]):
+    if idx != (candidate_pose_affine.shape[0]-1):
+        row_string = '[{}, {}, {}, {}],'.format(str(candidate_pose_affine[idx,0]),
+                                                str(candidate_pose_affine[idx,1]),
+                                                str(candidate_pose_affine[idx,2]),
+                                                str(candidate_pose_affine[idx,3]))
+    else:
+        row_string = '[{}, {}, {}, {}]\n'.format(str(candidate_pose_affine[idx,0]),
+                                                    str(candidate_pose_affine[idx,1]),
+                                                    str(candidate_pose_affine[idx,2]),
+                                                    str(candidate_pose_affine[idx,3]))
+    poses_file.write(row_string)
+
+
+
+
         # TODO: not implemented yet
+
+
 
         raise NotImplementedError
 
