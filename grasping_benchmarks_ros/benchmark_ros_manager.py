@@ -15,7 +15,6 @@ Its features are:
 (4. assess if the grasp was successful or not)
 """
 
-
 from ast import dump
 from os import mkdir
 import rospy
@@ -120,18 +119,30 @@ class GraspingBenchmarksManager(object):
         if self._verbose:
             print("Received new command from user...")
 
-        available_commands = "help : display available commands\n \
-                              grasp: compute a new grasp and send it to the robot for execution\n \
-                              get_candidates: computes a number of candidates and saves them to file\n \
-                              abort: interrupt grasp computation / do not send computed pose to the robot"
+        available_commands_dict = {}
+        available_commands_dict['help'] = "display available commands"
+        available_commands_dict['grasp'] = "compute a new grasp and send it to the robot for execution"
+        available_commands_dict['get_candidates [n]'] = "computes n candidates and saves them to file"
+        available_commands_dict['abort'] = "interrupt grasp computation / do not send computed pose to the robot"
+
+        available_commands_string = ''.join(["{}: {}\n".format(cmd, available_commands_dict[cmd]) for cmd in available_commands_dict.keys()])
+
+        valid_command = False
+        for cmd_string in available_commands_dict.keys():
+            if cmd_string.split()[0] in req.cmd.data:
+                valid_command = True
+        if not valid_command:
+            rospy.logerr("Invalid command")
+            rospy.loginfo("Available commands are: {}".format(available_commands_string))
+            return Bool(False)
 
         self._abort = False
 
         if req.cmd.data == "help":
-            print("Available commands are:\n", available_commands)
+            print("Available commands are:\n", available_commands_string)
             return Bool(True)
 
-        elif req.cmd.data == "grasp" or req.cmd.data == "get_candidates":
+        elif req.cmd.data == "grasp" or (req.cmd.data.split()[0] == "get_candidates" and len(req.cmd.data.split()) == 2):
 
             # --- get images --- #
             if self._verbose:
@@ -189,7 +200,7 @@ class GraspingBenchmarksManager(object):
             planner_req.cloud = pc_out
 
             # Set number of candidates
-            planner_req.n_of_candidates = NUMBER_OF_CANDIDATES
+            planner_req.n_of_candidates = NUMBER_OF_CANDIDATES if req.cmd.data == "grasp" else int(req.cmd.data.split()[1])
 
             if self._verbose:
                 print("... send request to server ...")
@@ -211,7 +222,7 @@ class GraspingBenchmarksManager(object):
             # --- If the request is to execute a grasp, execute the first candidate
             # TODO: not the first candidate, the best
             if req.cmd.data == "grasp":
-                return self.execute_grasp(self.get_best_grasp(reply.grasp_candidates), self._camera_pose)
+                return self.execute_grasp(self.get_best_grasp(reply.grasp_candidates))
             else:
                 return self.dump_grasps(reply.grasp_candidates)
 
@@ -248,7 +259,6 @@ class GraspingBenchmarksManager(object):
             for candidate in grasps:
                 candidate_pose_orientation = candidate.pose.pose.orientation
                 candidate_pose_position = candidate.pose.pose.position
-                import ipdb; ipdb.set_trace()
                 candidate_pose_score = candidate.score.data
                 candidate_pose_affine = np.eye(4)
                 candidate_pose_affine[:3, :3] = quaternion_to_matrix([candidate_pose_orientation.x,
