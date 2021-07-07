@@ -34,8 +34,8 @@ GpdGraspPlannerService::GpdGraspPlannerService(ros::NodeHandle& node, std::strin
 
 }
 
-bool GpdGraspPlannerService::planGrasps(grasping_benchmarks_ros::GraspPlannerCloud::Request& req,
-                                        grasping_benchmarks_ros::GraspPlannerCloud::Response& res)
+bool GpdGraspPlannerService::planGrasps(grasping_benchmarks_ros::GraspPlanner::Request& req,
+                                        grasping_benchmarks_ros::GraspPlanner::Response& res)
 {
   ROS_INFO("Received service request from benchmark...");
 
@@ -47,7 +47,7 @@ bool GpdGraspPlannerService::planGrasps(grasping_benchmarks_ros::GraspPlannerClo
   // Set view points.
   Eigen::Matrix3Xd view_points(3,1);
   view_points.col(0) = view_point_;
-  view_points.col(0) << req.view_point.position.x, req.view_point.position.y, req.view_point.position.z;
+  view_points.col(0) << req.view_point.pose.position.x, req.view_point.pose.position.y, req.view_point.pose.position.z;
 
   // Set point cloud.
   if (cloud_ros.fields.size() == 6 && cloud_ros.fields[3].name == "normal_x"
@@ -74,9 +74,10 @@ bool GpdGraspPlannerService::planGrasps(grasping_benchmarks_ros::GraspPlannerClo
   grasp_detector_->preprocessPointCloud(*cloud_camera_);
 
   // 3. Detect grasps in the point cloud.
+  // The list is already ordered by grasp quality
   std::vector<std::unique_ptr<gpd::candidate::Hand>> grasps = grasp_detector_->detectGrasps(*cloud_camera_);
 
-  if (grasps.size() > 0)
+  if (grasps.size() >= req.n_of_candidates)
   {
     // Visualize the detected grasps in rviz.
     if (use_rviz_)
@@ -87,17 +88,27 @@ bool GpdGraspPlannerService::planGrasps(grasping_benchmarks_ros::GraspPlannerClo
     cloud_camera_header_.frame_id = cloud_ros.header.frame_id;
 
     // 4. Create benchmark grasp reply.
-    grasping_benchmarks_ros::BenchmarkGrasp bench_grasp = GraspMessages::convertToBenchmarkGraspMsg(*grasps[0], cloud_camera_header_, grasp_pose_offset_);
+    grasping_benchmarks_ros::BenchmarkGrasp best_grasp = GraspMessages::convertToBenchmarkGraspMsg(*grasps[0], cloud_camera_header_, grasp_pose_offset_);
+    for (size_t grasp_idx = 0; grasp_idx < req.n_of_candidates; ++grasp_idx)
+    {
+      auto& grasp_candidate = grasps[grasp_idx];
+      grasping_benchmarks_ros::BenchmarkGrasp bench_grasp = GraspMessages::convertToBenchmarkGraspMsg(*grasp_candidate, cloud_camera_header_, grasp_pose_offset_);
+      res.grasp_candidates.push_back(bench_grasp);
+      if (bench_grasp.score.data > best_grasp.score.data)
+      {
+        best_grasp = bench_grasp;
+      }
+    }
 
-    // Publish grasp on topic
-    grasps_pub_.publish(bench_grasp.pose);
+    // Publish the best grasp on topic
 
-    res.grasp = bench_grasp;
+    grasps_pub_.publish(best_grasp.pose);
+
     ROS_INFO_STREAM("Detected grasp.");
     return true;
   }
 
-  ROS_WARN("No grasps detected!");
+  ROS_WARN("Not enough grasp candidates detected!");
   return false;
 }
 
