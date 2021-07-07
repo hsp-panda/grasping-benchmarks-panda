@@ -225,12 +225,21 @@ It is the main actor of the framework, connecting the different modules and send
       | superquadrics |
       | graspnet |
 
-    - Send grasp commands to the service `/<target>_bench/user_cmd`. For example:
+    - Send commands to the service `/<target>_bench/user_cmd`. For example, to get a list of available commands:
       ```bashrc
-      $ rosservice call /dexnet_bench/user_cmd "cmd: {data: 'grasp'}"
+      $ rosservice call /dexnet_bench/user_cmd "cmd: {data: 'help'}"
+      Available commands are:
+      help: display available commands
+      grasp: compute a new grasp and send it to the robot for execution
+      get_candidates [n]: computes n candidates and saves them to file
+      abort: interrupt grasp computation / do not send computed pose to the robot
       ```
 
-    - Watch it go and/or brace for impact :stuck_out_tongue:
+    - Or, to grasp:
+      ```
+      $ rosservice call /dexnet_bench/user_cmd "cmd: {data: 'grasp'}"
+      ```
+      Watch it go and/or brace for impact :stuck_out_tongue:
 
 ## Maintainers
 This repository is maintained by:
