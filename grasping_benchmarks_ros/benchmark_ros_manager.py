@@ -38,19 +38,12 @@ from panda_grasp_srv.srv import PandaGrasp, PandaGraspRequest, PandaGraspRespons
 
 import numpy as np
 
-NUMBER_OF_CANDIDATES = 10
+NUMBER_OF_CANDIDATES = 1
 
 NEW_MSG = {
 "new_data": False,
 "data": {},
 }
-
-# TODO: find a way to define the grasp service depending on the type of grasp planner
-# GRASP_PLANNER_SRV = {
-#     'GraspPlanner': GraspPlanner,
-#     'GraspPlannerCloud': GraspPlannerCloud,
-#     }
-
 
 class GraspingBenchmarksManager(object):
     def __init__(self, grasp_planner_service_name, grasp_planner_service, user_cmd_service_name, panda_service_name, verbose=False):
@@ -59,10 +52,6 @@ class GraspingBenchmarksManager(object):
 
         # --- new grasp command service --- #
         self._new_grasp_srv = rospy.Service(user_cmd_service_name, UserCmd, self.user_cmd)
-
-        # --- grasp planner service --- #
-        # TODO: I guess we can get rid of this one
-        # self._grasp_planner_srv = GRASP_PLANNER_SRV[grasp_planner_service]
 
         rospy.loginfo("GraspingBenchmarksManager: Waiting for grasp planner service...")
         rospy.wait_for_service(grasp_planner_service_name, timeout=30.0)
@@ -165,7 +154,6 @@ class GraspingBenchmarksManager(object):
             planner_req.color_image = self._rgb_msg
             planner_req.depth_image = self._depth_msg
             planner_req.camera_info = self._cam_info_msg
-            planner_req.n_of_candidates = NUMBER_OF_CANDIDATES
 
             # Fill in the camera viewpoint field
             planner_req.view_point.header = self._camera_pose.header
@@ -293,64 +281,6 @@ class GraspingBenchmarksManager(object):
         Parameters:
             - grasp (obj: BenchmarkGrasp msg)
         """
-
-        # gp_quat = grasp.pose.pose.orientation
-        # gp_pose = grasp.pose.pose.position
-
-        # # TODO: THIS SHOULD NOT BE THE CASE. THIS CHECK AND FIX WILL BE REMOVED SHORTLY, SINCE
-        # # THE VIEWPOINT IS NOW EMBEDDED INTO THE SERVICE REQUEST AND THE PLANNER SERVICE SHOULD
-        # # ANSWER WITH A POSE IN THE ROOT REFERENCE FRAME AND TRANSFORM IT IF NEEDED.
-
-        # if self._grasp_planner_srv is GraspPlanner:
-        #     # Need to tranform the grasp pose from camera frame to world frame
-        #     # w_T_grasp = w_T_cam * cam_T_grasp
-
-        #     cam_T_grasp = np.eye(4)
-        #     cam_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
-        #     cam_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
-
-        #     cam_quat = cam_pose.rotation
-        #     cam_pose = cam_pose.translation
-        #     w_T_cam = np.eye(4)
-        #     w_T_cam[:3, :3] = quaternion_to_matrix([cam_quat.x, cam_quat.y, cam_quat.z, cam_quat.w])
-        #     w_T_cam[:3, 3] = np.array([cam_pose.x, cam_pose.y, cam_pose.z])
-
-        #     w_T_grasp = np.matmul(w_T_cam, cam_T_grasp)
-        #     print("w_T_cam\n ", w_T_cam)
-        #     print("cam_T_grasp\n ", cam_T_grasp)
-        #     print("w_T_grasp\n ", w_T_grasp)
-
-        # elif self._grasp_planner_srv is GraspPlannerCloud:
-        #     # In this case, there is no need to change the grasp pose reference frame
-
-        #     w_T_grasp = np.eye(4)
-        #     w_T_grasp[:3,:3] = quaternion_to_matrix([gp_quat.x, gp_quat.y, gp_quat.z, gp_quat.w])
-        #     w_T_grasp[:3,3] = np.array([gp_pose.x, gp_pose.y, gp_pose.z])
-
-        #     # However, we need to make sure the X axis points upwards and not downwards
-        #     # We don' t want the wrist to twist too much
-
-        #     z_axis = np.array([0.0, 0.0, 1.0])
-        #     # if np.dot(w_T_grasp[:3, 0], z_axis) < 0:
-        #     #     rotation_around_z = quaternion_to_matrix([0,0,1,0])
-        #     #     w_T_grasp[:3,:3] = np.dot(w_T_grasp[:3,:3], rotation_around_z)
-
-        #     print("w_T_grasp\n ", w_T_grasp)
-
-        # # Create the ROS pose message to send to robot
-        # grasp_pose_msg = geometry_msgs.msg.PoseStamped()
-
-        # grasp_pose_msg.header.frame_id = 'panda_link0'
-
-        # grasp_pose_msg.pose.position.x = w_T_grasp[0,3]
-        # grasp_pose_msg.pose.position.y = w_T_grasp[1,3]
-        # grasp_pose_msg.pose.position.z = w_T_grasp[2,3]
-
-        # q = matrix_to_quaternion(w_T_grasp[:3,:3])
-        # grasp_pose_msg.pose.orientation.x = q[0]
-        # grasp_pose_msg.pose.orientation.y = q[1]
-        # grasp_pose_msg.pose.orientation.z = q[2]
-        # grasp_pose_msg.pose.orientation.w = q[3]
 
         panda_req = PandaGraspRequest()
         panda_req.grasp = grasp.pose
