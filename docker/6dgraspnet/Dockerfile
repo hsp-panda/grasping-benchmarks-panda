@@ -146,6 +146,8 @@ RUN mkdir -p ${WS_SOURCES} && \
     pip3 install PyQt5 &&\
     sh checkpoints/download_models.sh
 
+ENV GRASPNET_DIR=${WS_SOURCES}/pytorch_6dof-graspnet
+
 # # Install benchmark-grasping
 # # ==========================
 
