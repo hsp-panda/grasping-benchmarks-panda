@@ -176,16 +176,13 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
 
         # Compute grasps according to the pytorch implementation
-        import ipdb; ipdb.set_trace()
         self.latest_grasps, self.latest_grasp_scores = self.estimator.generate_and_refine_grasps(self.object_pc)
         self.grasp_poses.clear()
-        self.best_grasp = None
-
 
         # Sort grasps from best to worst
         # (Assume grasps and scores are lists)
-        if len(self.latest_grasps == n_candidates):
-            sorted_grasps_quality_list = sorted(zip(self.latest_grasp_scores, self.latest_grasps))
+        if len(self.latest_grasps) >= n_candidates:
+            sorted_grasps_quality_list = sorted(zip(self.latest_grasp_scores, self.latest_grasps), key=lambda pair: pair[0])
         else:
             return False
 
@@ -193,17 +190,19 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         # Grasps are specified wrt the camera ref frame
 
         for grasp_tuple in sorted_grasps_quality_list[:n_candidates]:
-            grasp = grasp_tuple[0]
-            score = grasp_tuple[1]
+            grasp = grasp_tuple[1]
+            score = grasp_tuple[0]
             # Grasps should already be in 6D as output
             #TODO Offset should be applied here too
-            grasp_6d = Grasp6D(position=grasp[:3,3],
-                               rotation=grasp[:3, 3],
+            grasp_6d = Grasp6D(position=grasp[:3, 3],
+                               rotation=grasp[:3,:3],
                                width=0, score=score,
-                               ref_frame=camera_data.intrinsic_params.frame)
+                               ref_frame=camera_data.intrinsic_params['frame'])
             self.grasp_poses.append(grasp_6d)
 
         self.best_grasp = self.grasp_poses[0]
+
+        import ipdb; ipdb.set_trace()
 
         return True
 
