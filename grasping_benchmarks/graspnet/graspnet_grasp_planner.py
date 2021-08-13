@@ -2,7 +2,7 @@
 # This software may be modified and distributed under the terms of the
 # LGPL-2.1+ license. See the accompanying LICENSE file for details.
 
-from re import M
+import ipdb
 import yaml
 import os
 import sys
@@ -15,15 +15,15 @@ from grasping_benchmarks.base.base_grasp_planner import BaseGraspPlanner, Camera
 from grasping_benchmarks.base.grasp import Grasp6D
 from grasping_benchmarks.base import transformations as tr
 
-import mayavi.mlab as mlab
+# import mayavi.mlab as mlab
 
 # Import the GraspNet implementation code
 # Requires a GRASPNET_DIR environment variable pointing to the root of the repo
 sys.path.append(os.environ['GRASPNET_DIR'])
 os.chdir(os.environ['GRASPNET_DIR'])
-from demo import get_color_for_pc, backproject
+from demo.main import get_color_for_pc, backproject
 import grasp_estimator
-import utils
+import utils.utils as utils
 
 class GraspNetGraspPlanner(BaseGraspPlanner):
     """Grasp planner based on 6Dof-GraspNet
@@ -151,7 +151,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
         # The algorithm requires an object point cloud, low-pass filtered over
         # 10 frames. For now, we just use the same pc
-        self.object_pc = pc_colors
+        self.object_pc = self.scene_pc
 
         # Not sure if we should return a CameraData object or simply assign it
         self._camera_data = camera_data
@@ -176,6 +176,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
 
         # Compute grasps according to the pytorch implementation
+        import ipdb; ipdb.set_trace()
         self.latest_grasps, self.latest_grasp_scores = self.estimator.generate_and_refine_grasps(self.object_pc)
         self.grasp_poses.clear()
         self.best_grasp = None
