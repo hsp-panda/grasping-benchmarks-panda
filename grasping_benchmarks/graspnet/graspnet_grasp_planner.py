@@ -2,7 +2,6 @@
 # This software may be modified and distributed under the terms of the
 # LGPL-2.1+ license. See the accompanying LICENSE file for details.
 
-from traitlets.traitlets import Bool
 import yaml
 import os
 import sys
@@ -210,7 +209,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
         return True
 
-    def visualize(self, visualize_all : Bool = True):
+    def visualize(self, visualize_all : bool = True):
         """Visualize point cloud and last batch of computed grasps in a 3D visualizer
         """
 

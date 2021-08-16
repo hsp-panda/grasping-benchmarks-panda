@@ -5,8 +5,6 @@
 # This software may be modified and distributed under the terms of the
 # LGPL-2.1+ license. See the accompanying LICENSE file for details.
 
-from grasping_benchmarks.base import grasp
-from traits.trait_types import Bool
 import yaml
 import math
 import os
@@ -38,7 +36,7 @@ class VisuMutex:
     def isReady(self):
         return self._ready_to_visu
 
-    def setReadyState(self, state : Bool):
+    def setReadyState(self, state : bool):
         self._mutex.acquire()
         try:
             self._ready_to_visu = state
