@@ -15,7 +15,7 @@ from grasping_benchmarks.base.base_grasp_planner import BaseGraspPlanner, Camera
 from grasping_benchmarks.base.grasp import Grasp6D
 from grasping_benchmarks.base import transformations as tr
 
-# import mayavi.mlab as mlab
+import mayavi.mlab as mlab
 
 # Import the GraspNet implementation code
 # Requires a GRASPNET_DIR environment variable pointing to the root of the repo
@@ -24,6 +24,7 @@ os.chdir(os.environ['GRASPNET_DIR'])
 from demo.main import get_color_for_pc, backproject
 import grasp_estimator
 import utils.utils as utils
+import utils.visualization_utils as visu_utils
 
 class GraspNetGraspPlanner(BaseGraspPlanner):
     """Grasp planner based on 6Dof-GraspNet
@@ -52,6 +53,10 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         # Additional configuration of the planner
         self._grasp_offset = grasp_offset
         self.configure(self.cfg)
+
+        self.latest_grasps = []
+        self.latest_grasp_scores = []
+        self.n_of_candidates = 1
 
 
     def configure(self, cfg : dict):
@@ -174,6 +179,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             True if any number of candidates could be retrieved, False otherwise
         """
 
+        self.n_of_candidates = n_candidates
 
         # Compute grasps according to the pytorch implementation
         self.latest_grasps, self.latest_grasp_scores = self.estimator.generate_and_refine_grasps(self.object_pc)
@@ -202,23 +208,21 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
         self.best_grasp = self.grasp_poses[0]
 
-        import ipdb; ipdb.set_trace()
-
         return True
 
-    def visualize(self):
+    def visualize(self, visualize_all : Bool = True):
         """Visualize point cloud and last batch of computed grasps in a 3D visualizer
-
         """
 
+        candidates_to_display = self.n_of_candidates if ((self.n_of_candidates > 0) and (self.n_of_candidates < len(self.latest_grasps)) and not visualize_all) else len(self.latest_grasps)
+
         mlab.figure(bgcolor=(1,1,1))
-        utils.draw_scene(
-            self.scene_pc,
-            self.scene_pc_colors,
-            grasps=self.latest_grasps,
-            grasp_score=self.latest_grasp_scores
+        visu_utils.draw_scene(
+            pc=self.scene_pc,
+            grasps=self.latest_grasps[:candidates_to_display],
+            grasp_scores=self.latest_grasp_scores[:candidates_to_display],
+            pc_color=self.scene_pc_colors
         )
         print('[INFO] Close visualization window to proceed')
         mlab.show()
 
-        return super().visualize()
