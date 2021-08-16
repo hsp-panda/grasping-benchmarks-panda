@@ -1,129 +1,176 @@
-# per il momento
-# assicurasi di avere python 2.7
-# installare
-# sudo apt-get install -y libspatialindex-dev per requirements.txt
-# poi pyrender version richiesta nei requirements.txt si scarica versione imageio non compatibile con python2.7. In master di pyrender hanno risolto questo bug. ho provto quindi a usare pyrender master
-# necessita di qt4
-# sudo apt-get install -y qt4-default
-# compile with CC=gcc-7 CXX=g++-7
-# --------------------------------------------------------#
-ARG from=nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
+# syntax=docker/dockerfile:experimental
+
+ARG from=ubuntu:bionic
 FROM ${from}
 
-# Create a new runtimeusers group (it might be already present)
-RUN groupadd runtimeusers || true
+# Change default shell to bash
+SHELL ["/bin/bash", "-c"]
 
-ENV CC="gcc-8"
-ENV CXX="g++-8"
-
+# Install packages
+# ================
 RUN apt-get update &&\
     apt-get install -y --no-install-recommends \
+        sudo \
+        gosu \
+        software-properties-common \
         git \
+        wget \
+        curl \
+        nano \
+        unzip \
+        libgl1-mesa-glx \
+        libgl1-mesa-dri \
+        apt-transport-https \
+        apt-utils \
+        dbus-x11 \
+        bash-completion \
+        gdb \
+        ssh \
+        iputils-ping \
+        gnupg \
+        gnupg2 \
+        xvfb \
+        &&\
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add - && \
+    apt-add-repository "deb https://apt.kitware.com/ubuntu/ `lsb_release -cs` main" &&\
+    add-apt-repository ppa:ubuntu-toolchain-r/test &&\
+    apt-get update &&\
+    apt-get install -y --no-install-recommends \
+        gcc-8 \
+        g++-8 \
         cmake \
         cmake-curses-gui \
         build-essential \
-        gcc-8 \
-        g++-8 \
-        python-pip \
-        python-setuptools \
-        libpython-dev \
-        python-dev \
-        python-wheel \
-        libspatialindex-dev \
-        qt4-default \
         &&\
-        rm -rf /var/lib/apt/lists/*
-
-# Install git-lfs
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
-    apt-get install git-lfs &&\
-    git lfs install \
-    &&\
     rm -rf /var/lib/apt/lists/*
 
-# Setup locales and tzdata
-RUN sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen &&\
-    locale-gen &&\
-    update-locale LANG="en_US.UTF-8" &&\
-    export DEBIAN_FRONTEND=noninteractive &&\
-    export DEBCONF_NONINTERACTIVE_SEEN=true &&\
-    rm -rf /etc/localtime &&\
-    rm -rf /etc/timezone &&\
-    echo 'tzdata tzdata/Areas select Europe' | debconf-set-selections &&\
-    echo 'tzdata tzdata/Zones/Europe select Rome' | debconf-set-selections &&\
+# Setup locales and timezone
+ENV TZ=Europe/Rome
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update &&\
+    apt-get install -y --no-install-recommends locales locales-all tzdata &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    echo "${TZ}" | tee /etc/timezone &&\
+    dpkg-reconfigure --frontend noninteractive tzdata
+
+
+# Install python3
+# ===============
+ENV PYTHON_VERSION=3.6
+RUN add-apt-repository ppa:deadsnakes/ppa &&\
     apt-get update &&\
-    apt-get install -y --no-install-recommends tzdata &&\
+    apt-get install -y --no-install-recommends \
+        python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-dev \
+        libpython${PYTHON_VERSION}-dev \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        python3-pygments \
+        python3-numpy \
+        &&\
     rm -rf /var/lib/apt/lists/*
+RUN python3 -m pip install --upgrade pip
 
-# ===========================
-# Setup the python virtualenv
-# ===========================
+# Install ROS Desktop Full
+# ========================
+
+# https://github.com/osrf/docker_images/blob/master/ros/
+ENV ROS_DISTRO=melodic
+
+RUN apt-key adv --keyserver keyserver.ubuntu.com \
+                --recv-keys F42ED6FBAB17C654 &&\
+    echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -cs` main" \
+        > /etc/apt/sources.list.d/ros-latest.list &&\
+    apt-get update &&\
+    apt-get install -y --no-install-recommends \
+        ros-${ROS_DISTRO}-desktop-full \
+        python-rosdep \
+        python-rosinstall \
+        python-rosinstall-generator \
+        python-vcstools \
+        python-wstool \
+        python-catkin-tools \
+        python3-catkin-pkg-modules \
+        python3-rospkg-modules \
+        python3-empy \
+        &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    rosdep init &&\
+    rosdep update &&\
+    echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /etc/bash.bashrc
+
+# Set workspace directories
+# =========================
 ENV WS_DIR=/workspace
-ENV VIRTUAL_ENV=${WS_DIR}/ve
-ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
-RUN pip install virtualenv
+ENV CATKIN_WS_DIR=${WS_DIR}/catkin_ws
+ENV WS_INSTALL=${WS_DIR}/install
+ENV WS_SOURCES=${WS_DIR}/sources
+ARG WS_BIN=${WS_SOURCES}/bin
 
-# ===================
-# Install 6D GraspNet
-# ===================
+# Create a new runtimeusers group
+RUN groupadd -K GID_MIN=900 -K GID_MAX=1100 runtimeusers
 
-# tensorflow 1.12
-RUN mkdir ${WS_DIR} && virtualenv ${VIRTUAL_ENV} &&\
-    wget https://storage.googleapis.com/tf-performance/tf_binary/tensorflow-1.12.0.a6d8ffa.AVX2.CUDA10-cp27-cp27mu-linux_x86_64.whl && \
-    ${VIRTUAL_ENV}/bin/pip install tensorflow-1.12.0.a6d8ffa.AVX2.CUDA10-cp27-cp27mu-linux_x86_64.whl && \
-    rm tensorflow-1.12.0.a6d8ffa.AVX2.CUDA10-cp27-cp27mu-linux_x86_64.whl
+# Create catkin_ws with dependencies/ros packages for python3
+# ===========================================================
+RUN mkdir -p ${CATKIN_WS_DIR}/src && \
+    cd ${CATKIN_WS_DIR} &&\
+    wstool init &&\
+    wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
+    wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
+    wstool up &&\
+    rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
+    catkin build  -j8 && \
+    echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
+# Install 6DoFGraspNet and related dependencies
+# =============================================
+RUN mkdir -p ${WS_SOURCES} && \
+    cd ${WS_SOURCES} &&\
+    git clone https://github.com/jsll/pytorch_6dof-graspnet.git &&\
+    git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
+    pip3 install torch==1.4.0+cu100 torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
+    cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
+    cd ../pytorch_6dof-graspnet &&\
+    sed -i 's/PyYAML==5.4/PyYAML/g' requirements &&\
+    sed -i 's/mayavi==4.7.1/mayavi==4.7.3/g' requirements.txt &&\
+    pip3 install -r requirements.txt &&\
+    pip3 install PyQt5 &&\
+    sh checkpoints/download_models.sh
 
-RUN cd ${WS_DIR} &&\
-    git clone https://github.com/NvLabs/6dof-graspnet &&\
-    git clone https://github.com/charlesq34/pointnet2 &&\
-    cd 6dof-graspnet && \
-    # workaround needed to install imageio version compatible with python 2.7
-    ${VIRTUAL_ENV}/bin/pip install vtk &&\
-    sed -i '/pyrender/d' requirements.txt &&\
-    sed -i '/mayavi/d' requirements.txt &&\
-    echo -e "pyglet==1.4.10\npyrender==0.1.43\npyface==6.1.2\ntraitsui==6.1.2\nmayavi==4.7.0" >> requirements.txt &&\
-    ${VIRTUAL_ENV}/bin/pip install -r requirements.txt && \
-    find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${VIRTUAL_ENV} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+ENV GRASPNET_DIR=${WS_SOURCES}/pytorch_6dof-graspnet
 
-# download pre-trained models
-RUN mkdir ${WS_DIR}/6dof-graspnet/checkpoints && cd ${WS_DIR}/6dof-graspnet/checkpoints &&\
-    ${VIRTUAL_ENV}/bin/pip install gdown &&\
-    mkdir -p latent_size_2_ngpus_1_gan_1_confidence_weight_0.1_npoints_1024_num_grasps_per_object_256_train_evaluator_0_/tf_output && \
-    cd latent_size_2_ngpus_1_gan_1_confidence_weight_0.1_npoints_1024_num_grasps_per_object_256_train_evaluator_0_ &&\
-    gdown https://drive.google.com/uc?id=1PC-FDD9gyGwgtEkEhQl9NDwhZ4sqauao &&\
-    gdown https://drive.google.com/uc?id=1VkPcv6mvpIPf6rfSxGoJJBGrIm3ES4Ch && \
-    cd tf_output &&\
-    gdown https://drive.google.com/uc?id=19GhsCIWx2jZ8MeF8clqBC3MFtlZtzrwd &&\
-    gdown https://drive.google.com/uc?id=1MqCBN17pkly-d69brzYybLbBd3zfgu0t &&\
-    gdown https://drive.google.com/uc?id=1uUYd1RoEgzsJE0FCesXFEVnsNMlUdJPU &&\
-    gdown https://drive.google.com/uc?id=1_kZq_yw44OhMeVlFEVgwsTdsjJIHtkUj &&\
-    mkdir -p ${WS_DIR}/6dof-graspnet/checkpoints/npoints_1024_train_evaluator_0_allowed_categories__ngpus_1_/tf_output && \
-    cd  ${WS_DIR}/6dof-graspnet/checkpoints/npoints_1024_train_evaluator_0_allowed_categories__ngpus_1_ &&\
-    gdown https://drive.google.com/uc?id=1nbP4eYL3jKUh7CAQATk3rV-BDoOZ3_Pa &&\
-    cd tf_output &&\
-    gdown https://drive.google.com/uc?id=1D4JmCSFgUv6TyIOHazgNt-YE18VoTHal &&\
-    gdown https://drive.google.com/uc?id=1ULJbs6UWoIxZ9Q5p0vqgfIZ61TreU9nX &&\
-    gdown https://drive.google.com/uc?id=1AAF5C3Aoy60KlWcMqKV1r35oZeU3vQT- &&\
-    gdown https://drive.google.com/uc?id=1xfEXEdIjJPQ31u885oRCuHy-rNH1KjZx &&\
-    gdown https://drive.google.com/uc?id=1OrRG1lGelECLaY7uJkgDyTp5b_yl05DV &&\
-    gdown https://drive.google.com/uc?id=11KE6pblIOVGJ0mgeaLagkM3y6goJiFBO &&\
-    mkdir -p ${WS_DIR}/6dof-graspnet/checkpoints/npoints_1024_train_evaluator_1_allowed_categories__ngpus_8_/tf_output && \
-    cd  ${WS_DIR}/6dof-graspnet/checkpoints/npoints_1024_train_evaluator_1_allowed_categories__ngpus_8_ &&\
-    gdown https://drive.google.com/uc?id=1I7W-6h4niL6F2gOKPXV4j6UdFWmNmdcF &&\
-    cd tf_output &&\
-    gdown https://drive.google.com/uc?id=1bLN37AgGmJCjZ9RSVtUXdaCOsi1EzpsM &&\
-    gdown https://drive.google.com/uc?id=18xC4bl2fwy5wy3qgog_fdAvFQQtSY_-k &&\
-    gdown https://drive.google.com/uc?id=1hqRMdrR5Tdx1RDOXDQFJmzbAHE1fa7Aq &&\
-    gdown https://drive.google.com/uc?id=1bYZfDT_OM7lBr6yl77oiSfbn_9QO19XW &&\
-    find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
-    find ${VIRTUAL_ENV} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+# # Install benchmark-grasping
+# # ==========================
 
+RUN cd ${CATKIN_WS_DIR}/src &&\
+    git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
+    pip3 install grasping-benchmarks-panda/ &&\
+    cd ${CATKIN_WS_DIR} &&\
+    catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
+    catkin build  -j8 && \
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+
+# =============
+# FIX OWNERSHIP
+# =============
+RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ &&\
+    find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+
+# Nvidia runtime support
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all
 
 # Image initialization
 # ====================
-
 ENV USERNAME=docker
 
 # Include a custom bashrc
