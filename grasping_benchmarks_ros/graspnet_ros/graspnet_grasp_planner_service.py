@@ -5,10 +5,13 @@
 # This software may be modified and distributed under the terms of the
 # LGPL-2.1+ license. See the accompanying LICENSE file for details.
 
+from grasping_benchmarks.base import grasp
+from traits.trait_types import Bool
 import yaml
 import math
 import os
 import time
+from threading import Lock
 
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
@@ -18,13 +21,33 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Header
 
-from grasping_benchmarks.base.transformations import quaternion_to_matrix
+from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
 from grasping_benchmarks.base.base_grasp_planner import CameraData
 from grasping_benchmarks_ros.srv import GraspPlanner, GraspPlannerRequest, GraspPlannerResponse
 from grasping_benchmarks_ros.msg import BenchmarkGrasp
 from grasping_benchmarks.graspnet.graspnet_grasp_planner import GraspNetGraspPlanner
 
+class VisuMutex:
+    """Simple class to synchronize threads on whether to display stuff or not
+    """
+    def __init__(self):
+        self._mutex = Lock()
+        self._ready_to_visu = False
+
+    @property
+    def isReady(self):
+        return self._ready_to_visu
+
+    def setReadyState(self, state : Bool):
+        self._mutex.acquire()
+        try:
+            self._ready_to_visu = state
+        finally:
+            self._mutex.release()
+
 DEBUG = True
+
+visualization_mutex = VisuMutex()
 
 class GraspnetGraspPlannerService(GraspNetGraspPlanner):
     def __init__(self, cfg_file : str, cv_bridge : CvBridge, grasp_offset : np.array, grasp_service_name : str, grasp_publisher_name : str):
@@ -128,12 +151,12 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
         camera_data = self.read_images(req)
 
         # Set number of candidates
-        #TODO: isnt this set in config phase? if it is, we should generate a lot
-        #and then cut the list at n_of_candidates
         n_of_candidates = req.n_of_candidates if req.n_of_candidates else 1
 
         ok = self.plan_grasp(camera_data, n_of_candidates)
         if ok:
+            # Communicate to main thread that we are ready to visu
+            visualization_mutex.setReadyState(True)
             self.camera_viewpoint = req.view_point
             return self._create_grasp_planner_srv_msg()
         else:
@@ -239,6 +262,7 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             # Publish poses for direct rViz visualization
             # TODO: properly publish all the poses
             print("Publishing grasps on topic")
+            self.grasp_pose_publisher.publish(response.grasp_candidates[0].pose)
 
         return response
 
@@ -265,7 +289,14 @@ if __name__ == "__main__":
                                                 grasp_publisher_name=grasp_publisher_name)
 
     rospy.loginfo("Grasping Policy Initiated")
-    rospy.spin()
+
+    # Visualization needs to be called from the main thread with mayavi
+    while(not rospy.is_shutdown()):
+        if visualization_mutex.isReady:
+            visualization_mutex.setReadyState(False)
+            grasp_planner.visualize(visualize_all=False)
+        rospy.sleep(1)
+
 
 
 
