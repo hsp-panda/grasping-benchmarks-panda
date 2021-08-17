@@ -81,7 +81,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
 
     def create_camera_data(self, rgb_image : np.ndarray, depth_image : np.ndarray, cam_intrinsic_frame :str, cam_extrinsic_matrix : np.ndarray,
-                           fx: float, fy: float, cx: float, cy: float, skew: float, w: int, h: int) -> CameraData:
+                           fx: float, fy: float, cx: float, cy: float, skew: float, w: int, h: int, obj_cloud : np.ndarray = None) -> CameraData:
 
         """Create the CameraData object in the format expected by the graspnet planner
 
@@ -110,6 +110,9 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             Image width
         h : int
             Image height
+        obj_cloud : np.ndarray, optional
+            Object point cloud to use for grasp planning (a segmented portion of
+            the point cloud could be given here)
 
         Returns
         -------
@@ -154,8 +157,13 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self.scene_pc_colors = pc_colors
 
         # The algorithm requires an object point cloud, low-pass filtered over
-        # 10 frames. For now, we just use the same pc
-        self.object_pc = self.scene_pc
+        # 10 frames. For now, we just use what comes from the camera.
+        # If a point cloud is passed to this function, use that as object pc for
+        # planning. Otherwise, use the scene cloud as object cloud
+        if obj_cloud is not None:
+            self.object_pc = obj_cloud
+        else:
+            self.object_pc = self.scene_pc
 
         # Not sure if we should return a CameraData object or simply assign it
         self._camera_data = camera_data
