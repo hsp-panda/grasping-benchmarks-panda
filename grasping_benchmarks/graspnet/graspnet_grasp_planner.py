@@ -196,15 +196,15 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         # (Assume grasps and scores are lists)
         if len(self.latest_grasps) >= n_candidates:
             sorted_grasps_quality_list = sorted(zip(self.latest_grasp_scores, self.latest_grasps), key=lambda pair: pair[0])
+            self.latest_grasps = [g[1] for g in sorted_grasps_quality_list]
+            self.latest_grasp_scores = [g[0] for g in sorted_grasps_quality_list]
         else:
             return False
 
         # Organize grasps in a Grasp class
         # Grasps are specified wrt the camera ref frame
 
-        for grasp_tuple in sorted_grasps_quality_list[:n_candidates]:
-            grasp = grasp_tuple[1]
-            score = grasp_tuple[0]
+        for grasp,score in zip(self.latest_grasps[:n_candidates], self.latest_grasp_scores[:n_candidates]):
             # Grasps should already be in 6D as output
             #TODO Offset should be applied here too
             grasp_6d = Grasp6D(position=grasp[:3, 3],
@@ -228,7 +228,8 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             pc=self.scene_pc,
             grasps=self.latest_grasps[:candidates_to_display],
             grasp_scores=self.latest_grasp_scores[:candidates_to_display],
-            pc_color=self.scene_pc_colors
+            pc_color=self.scene_pc_colors,
+            show_gripper_mesh=True
         )
         print('[INFO] Close visualization window to proceed')
         mlab.show()
