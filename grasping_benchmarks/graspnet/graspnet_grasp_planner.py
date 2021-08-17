@@ -206,9 +206,18 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
         for grasp,score in zip(self.latest_grasps[:n_candidates], self.latest_grasp_scores[:n_candidates]):
             # Grasps should already be in 6D as output
+            # A 90 degrees offset is applied to account for the difference in
+            # reference frame (see
+            # https://github.com/NVlabs/6dof-graspnet/issues/8)
+            # when dealing with the real robot hand
             #TODO Offset should be applied here too
-            grasp_6d = Grasp6D(position=grasp[:3, 3],
-                               rotation=grasp[:3,:3],
+            offset_transform = np.array([[0,-1, 0, 0],
+                                         [1, 0, 0, 0],
+                                         [0, 0, 1, 0],
+                                         [0, 0, 0, 1]])
+            grasp_with_offset = np.dot(grasp, offset_transform)
+            grasp_6d = Grasp6D(position=grasp_with_offset[:3, 3],
+                               rotation=grasp_with_offset[:3,:3],
                                width=0, score=score,
                                ref_frame=camera_data.intrinsic_params['frame'])
             self.grasp_poses.append(grasp_6d)
