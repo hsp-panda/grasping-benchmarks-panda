@@ -81,7 +81,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
 
     def create_camera_data(self, rgb_image : np.ndarray, depth_image : np.ndarray, cam_intrinsic_frame :str, cam_extrinsic_matrix : np.ndarray,
-                           fx: float, fy: float, cx: float, cy: float, skew: float, w: int, h: int) -> CameraData:
+                           fx: float, fy: float, cx: float, cy: float, skew: float, w: int, h: int, obj_cloud : np.ndarray = None) -> CameraData:
 
         """Create the CameraData object in the format expected by the graspnet planner
 
@@ -110,6 +110,9 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             Image width
         h : int
             Image height
+        obj_cloud : np.ndarray, optional
+            Object point cloud to use for grasp planning (a segmented portion of
+            the point cloud could be given here)
 
         Returns
         -------
@@ -154,8 +157,13 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self.scene_pc_colors = pc_colors
 
         # The algorithm requires an object point cloud, low-pass filtered over
-        # 10 frames. For now, we just use the same pc
-        self.object_pc = self.scene_pc
+        # 10 frames. For now, we just use what comes from the camera.
+        # If a point cloud is passed to this function, use that as object pc for
+        # planning. Otherwise, use the scene cloud as object cloud
+        if obj_cloud is not None:
+            self.object_pc = obj_cloud
+        else:
+            self.object_pc = self.scene_pc
 
         # Not sure if we should return a CameraData object or simply assign it
         self._camera_data = camera_data
@@ -188,19 +196,28 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         # (Assume grasps and scores are lists)
         if len(self.latest_grasps) >= n_candidates:
             sorted_grasps_quality_list = sorted(zip(self.latest_grasp_scores, self.latest_grasps), key=lambda pair: pair[0])
+            self.latest_grasps = [g[1] for g in sorted_grasps_quality_list]
+            self.latest_grasp_scores = [g[0] for g in sorted_grasps_quality_list]
         else:
             return False
 
         # Organize grasps in a Grasp class
         # Grasps are specified wrt the camera ref frame
 
-        for grasp_tuple in sorted_grasps_quality_list[:n_candidates]:
-            grasp = grasp_tuple[1]
-            score = grasp_tuple[0]
+        for grasp,score in zip(self.latest_grasps[:n_candidates], self.latest_grasp_scores[:n_candidates]):
             # Grasps should already be in 6D as output
+            # A 90 degrees offset is applied to account for the difference in
+            # reference frame (see
+            # https://github.com/NVlabs/6dof-graspnet/issues/8)
+            # when dealing with the real robot hand
             #TODO Offset should be applied here too
-            grasp_6d = Grasp6D(position=grasp[:3, 3],
-                               rotation=grasp[:3,:3],
+            offset_transform = np.array([[0,-1, 0, 0],
+                                         [1, 0, 0, 0],
+                                         [0, 0, 1, 0],
+                                         [0, 0, 0, 1]])
+            grasp_with_offset = np.dot(grasp, offset_transform)
+            grasp_6d = Grasp6D(position=grasp_with_offset[:3, 3],
+                               rotation=grasp_with_offset[:3,:3],
                                width=0, score=score,
                                ref_frame=camera_data.intrinsic_params['frame'])
             self.grasp_poses.append(grasp_6d)
@@ -220,7 +237,8 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             pc=self.scene_pc,
             grasps=self.latest_grasps[:candidates_to_display],
             grasp_scores=self.latest_grasp_scores[:candidates_to_display],
-            pc_color=self.scene_pc_colors
+            pc_color=self.scene_pc_colors,
+            show_gripper_mesh=True
         )
         print('[INFO] Close visualization window to proceed')
         mlab.show()

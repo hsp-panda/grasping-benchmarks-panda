@@ -5,6 +5,7 @@
 # This software may be modified and distributed under the terms of the
 # LGPL-2.1+ license. See the accompanying LICENSE file for details.
 
+from typing import Tuple
 import yaml
 import math
 import os
@@ -15,9 +16,13 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 import cv_bridge
 import rospy
+import ctypes
+import struct
 
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Header
+from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs import point_cloud2 as pc2
 
 from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
 from grasping_benchmarks.base.base_grasp_planner import CameraData
@@ -129,6 +134,12 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
         camera_extrinsic_matrix = np.eye(4)
         camera_extrinsic_matrix[:3,:3] = camera_orientation
         camera_extrinsic_matrix[:3,3] = camera_position
+
+        #  If available, get the object point cloud and transform it in the
+        #  camera ref frame
+        obj_cloud = self.npy_from_pc2(req.cloud)[0]
+        obj_cloud = self.transform_pc_to_camera_frame(obj_cloud, camera_extrinsic_matrix) if obj_cloud is not None else None
+
         camera_data = self.create_camera_data(rgb_image=cv2_color,
                                               depth_image=cv2_depth,
                                               cam_intrinsic_frame=camera_info.header.frame_id,
@@ -139,7 +150,8 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
                                               cy=camera_info.K[5],
                                               skew=0.0,
                                               w=camera_info.width,
-                                              h=camera_info.height)
+                                              h=camera_info.height,
+                                              obj_cloud=obj_cloud)
 
         return camera_data
 
@@ -159,6 +171,36 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             return self._create_grasp_planner_srv_msg()
         else:
             return GraspPlannerResponse()
+
+    def transform_pc_to_camera_frame(self, pc : np.ndarray, camera_pose : np.ndarray) -> np.ndarray:
+        """Transform the point cloud from root to camera reference frame
+
+        Parameters
+        ----------
+        pc : np.ndarray
+            nx3, float64 array of points
+        camera_pose : np.ndarray
+            4x4 camera pose, affine transformation
+
+        Returns
+        -------
+        np.ndarray
+            [description]
+        """
+
+        # [F]_p         : point p in reference frame F
+        # [F]_T_[f]     : frame f in reference frame F
+        # r             : root ref frame
+        # cam           : cam ref frame
+        # p, pc         : point, point cloud (points as rows)
+        # tr(r_pc) = r_T_cam * tr(cam_pc)
+        # tr(cam_pc) = inv(r_T_cam) * tr(r_pc)
+
+        r_pc = np.c_[pc, np.ones(pc.shape[0])]
+        cam_T_r = np.linalg.inv(camera_pose)
+        cam_pc = np.transpose(np.dot(cam_T_r, np.transpose(r_pc)))
+
+        return cam_pc[:, :-1]
 
     def transform_grasp_to_world(self, grasp_pose : PoseStamped, camera_viewpoint : PoseStamped) -> PoseStamped:
         """Transform the 6D grasp pose in the world reference frame, given the
@@ -263,6 +305,53 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             self.grasp_pose_publisher.publish(response.grasp_candidates[0].pose)
 
         return response
+
+    def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
+        """Naive conversion from PointCloud2 to a numpy format
+
+        Parameters
+        ----------
+        pc : PointCloud2
+            Scene or object pc
+
+        Returns
+        -------
+        Tuple[np.array, np.array]
+            Point cloud in a nx3 array, where rows are xyz, and nx3 array where
+            rows are rgb
+        """
+
+        if pc is None:
+            return None, None
+
+        xyz = np.array([[0,0,0]])
+        rgb = np.array([[0,0,0]])
+
+        # Obtain generator in list form
+        point_gen = pc2.read_points(pc, skip_nans=True)
+        int_data = list(point_gen)
+
+        for point in int_data:
+            point_data = point[3]
+
+            # Cast float32 to int so bitwise operations are possible
+            s = struct.pack('>f', point_data)
+            i = struct.unpack('>l', s)[0]
+            # Get colors in uint format
+            pack = ctypes.c_uint32(i).value
+            r = (pack & 0x00FF0000)>> 16
+            g = (pack & 0x0000FF00)>> 8
+            b = (pack & 0x000000FF)
+
+            # xyz can be retrieved from point with index 0 to 2
+            xyz = np.append(xyz, [[point[0], point[1], point[2]]], axis=0)
+            rgb = np.append(rgb, [[r, g, b]], axis=0)
+
+        # Remove the first 0,0,0 point
+        xyz = xyz[1:]
+        rgb = rgb[1:]
+
+        return xyz, rgb
 
 if __name__ == "__main__":
 
