@@ -54,6 +54,7 @@ echo "Running container $CONTAINERNAME as $USERNAME..."
 
 if [ ! -f $XAUTH ]
 then
+    touch $XAUTH
     xauth nlist :0 | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
     chmod a+x $XAUTH
     echo "Created file Xauth file $XAUTH"
