@@ -133,17 +133,19 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 
 # Install 6DoFGraspNet and related dependencies
 # =============================================
+RUN apt-get update &&\
+    pip3 install vtk==8.1.0 PyQt5 torch==1.4.0+cu100 \
+        torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
+    rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p ${WS_SOURCES} && \
     cd ${WS_SOURCES} &&\
     git clone https://github.com/jsll/pytorch_6dof-graspnet.git &&\
     git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
-    pip3 install torch==1.4.0+cu100 torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
     cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
     cd ../pytorch_6dof-graspnet &&\
-    sed -i 's/PyYAML==5.4/PyYAML/g' requirements &&\
-    sed -i 's/mayavi==4.7.1/mayavi==4.7.3/g' requirements.txt &&\
+    sed -i 's/PyYAML==5.4/PyYAML/g' requirements.txt &&\
     pip3 install -r requirements.txt &&\
-    pip3 install PyQt5 &&\
     sh checkpoints/download_models.sh
 
 ENV GRASPNET_DIR=${WS_SOURCES}/pytorch_6dof-graspnet
