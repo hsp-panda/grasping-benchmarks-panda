@@ -195,7 +195,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         # Sort grasps from best to worst
         # (Assume grasps and scores are lists)
         if len(self.latest_grasps) >= n_candidates:
-            sorted_grasps_quality_list = sorted(zip(self.latest_grasp_scores, self.latest_grasps), key=lambda pair: pair[0])
+            sorted_grasps_quality_list = sorted(zip(self.latest_grasp_scores, self.latest_grasps), key=lambda pair: pair[0], reverse=True)
             self.latest_grasps = [g[1] for g in sorted_grasps_quality_list]
             self.latest_grasp_scores = [g[0] for g in sorted_grasps_quality_list]
         else:
