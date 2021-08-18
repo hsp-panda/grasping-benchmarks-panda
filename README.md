@@ -39,7 +39,7 @@ So far, this repo includes support for:
 **Dexnet** | [docs](https://berkeleyautomation.github.io/dex-net/)  | [paper](https://arxiv.org/pdf/1703.09312.pdf) |
 **GPD** | [docs](https://github.com/atenpas/gpd) | [paper](https://arxiv.org/pdf/1706.09911.pdf) |
 **Superquadrics-based grasp planner**  | [docs](https://github.com/robotology/superquadric-lib) | [paper](http://lornat75.github.io/papers/2017/vezzani-icra.pdf) |
-(WIP) **6DoF-GraspNet** | [docs](https://github.com/jsll/pytorch_6dof-graspnet) [[original repo]](https://github.com/NVlabs/6dof-graspnet) | [paper](https://arxiv.org/abs/1905.10520) |
+**6DoF-GraspNet** | [docs](https://github.com/jsll/pytorch_6dof-graspnet) [[original repo]](https://github.com/NVlabs/6dof-graspnet) | [paper](https://arxiv.org/abs/1905.10520) |
 
 
 ## How to install
@@ -183,7 +183,8 @@ It is the main actor of the framework, connecting the different modules and send
 1. It reads the data sent by a Realsense camera through the ros module [IntelRealSense/realsense-ros](https://github.com/IntelRealSense/realsense-ros.git). The subscribed topics are:
   - `/camera/color/image_raw`: rgb image
   - `/camera/aligned_depth_to_color/image_raw`: aligned depth
-  - `/camera/depth_registered/points`: point cloud
+  - `/camera/depth_registered/points`: point cloud. In case you wish to use a
+    segmented point cloud instead of the camera feed, you must remap this.
 
   It also reads the camera pose wrt the robot base that should be part of the TF ROS tree. If this is not already taken care in your code, you can simply add it with the `rosrun tf static_transform_publisher` command. For instance, you can add a transform from the `/panda_EE` frame to the `/camera_link` frame:
       ```bash
