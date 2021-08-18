@@ -48,7 +48,7 @@ class VisuMutex:
         finally:
             self._mutex.release()
 
-DEBUG = True
+DEBUG = False
 
 visualization_mutex = VisuMutex()
 
