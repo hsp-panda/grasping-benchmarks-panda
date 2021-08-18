@@ -136,6 +136,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 RUN apt-get update &&\
     pip3 install vtk==8.1.0 PyQt5 torch==1.4.0+cu100 \
         torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
+    pip3 install --ignore-installed PyYAML==5.4.1 &&\
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p ${WS_SOURCES} && \
@@ -144,7 +145,6 @@ RUN mkdir -p ${WS_SOURCES} && \
     git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
     cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
     cd ../pytorch_6dof-graspnet &&\
-    sed -i 's/PyYAML==5.4/PyYAML/g' requirements.txt &&\
     pip3 install -r requirements.txt &&\
     sh checkpoints/download_models.sh
 
