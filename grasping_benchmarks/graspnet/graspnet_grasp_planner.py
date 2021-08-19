@@ -211,9 +211,9 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
             # https://github.com/NVlabs/6dof-graspnet/issues/8)
             # when dealing with the real robot hand
             #TODO Offset should be applied here too
-            offset_transform = np.array([[0,-1, 0, 0],
-                                         [1, 0, 0, 0],
-                                         [0, 0, 1, 0],
+            offset_transform = np.array([[0,-1, 0, self._grasp_offset[0]],
+                                         [1, 0, 0, self._grasp_offset[1]],
+                                         [0, 0, 1, self._grasp_offset[2]],
                                          [0, 0, 0, 1]])
             grasp_with_offset = np.dot(grasp, offset_transform)
             grasp_6d = Grasp6D(position=grasp_with_offset[:3, 3],
