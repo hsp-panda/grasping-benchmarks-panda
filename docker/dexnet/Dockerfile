@@ -136,7 +136,7 @@ RUN apt-get update && \
     numpy \
     scipy \
     matplotlib \
-    tensorflow==1.14.0 \
+    tensorflow-gpu==1.14.0 \
     scikit-build \
     scikit-learn \
     scikit-image \
