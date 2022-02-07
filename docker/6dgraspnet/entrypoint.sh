@@ -7,9 +7,9 @@ if [ ! -x "$(which setup.sh)" ] ; then
 fi
 
 # Initialize the container
-echo "==> Configuring superquadric_based image"
+echo "==> Configuring 6DoFGraspNet benchmarking image"
 setup.sh
-echo "==> superquadric_based container ready"
+echo "==> 6DoFGraspNet benchmarking container ready"
 
 # If a CMD is passed, execute it
 echo "== execute command $@"
