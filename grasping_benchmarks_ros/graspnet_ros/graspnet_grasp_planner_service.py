@@ -13,6 +13,7 @@ import time
 from threading import Lock
 
 from cv_bridge import CvBridge, CvBridgeError
+import ros_numpy
 import numpy as np
 import cv_bridge
 import rospy
@@ -306,8 +307,55 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
 
         return response
 
+    # def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
+    #     """Naive conversion from PointCloud2 to a numpy format
+
+    #     Parameters
+    #     ----------
+    #     pc : PointCloud2
+    #         Scene or object pc
+
+    #     Returns
+    #     -------
+    #     Tuple[np.array, np.array]
+    #         Point cloud in a nx3 array, where rows are xyz, and nx3 array where
+    #         rows are rgb
+    #     """
+
+    #     if pc is None:
+    #         return None, None
+
+    #     xyz = np.array([[0,0,0]])
+    #     rgb = np.array([[0,0,0]])
+
+    #     # Obtain generator in list form
+    #     point_gen = pc2.read_points(pc, skip_nans=True)
+    #     int_data = list(point_gen)
+
+    #     for point in int_data:
+    #         point_data = point[3]
+
+    #         # Cast float32 to int so bitwise operations are possible
+    #         s = struct.pack('>f', point_data)
+    #         i = struct.unpack('>l', s)[0]
+    #         # Get colors in uint format
+    #         pack = ctypes.c_uint32(i).value
+    #         r = (pack & 0x00FF0000)>> 16
+    #         g = (pack & 0x0000FF00)>> 8
+    #         b = (pack & 0x000000FF)
+
+    #         # xyz can be retrieved from point with index 0 to 2
+    #         xyz = np.append(xyz, [[point[0], point[1], point[2]]], axis=0)
+    #         rgb = np.append(rgb, [[r, g, b]], axis=0)
+
+    #     # Remove the first 0,0,0 point
+    #     xyz = xyz[1:]
+    #     rgb = rgb[1:]
+
+    #     return xyz, rgb
+
     def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
-        """Naive conversion from PointCloud2 to a numpy format
+        """Conversion from PointCloud2 to a numpy format
 
         Parameters
         ----------
@@ -321,37 +369,13 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             rows are rgb
         """
 
-        if pc is None:
-            return None, None
+        pc_data = ros_numpy.numpify(pc) # TODO: fix color decoding as with this method colors result in NaNs
 
-        xyz = np.array([[0,0,0]])
-        rgb = np.array([[0,0,0]])
+        points = np.array([pc_data['x'], pc_data['y'], pc_data['z']])
+        points_rgb = 255 * np.ones(points.shape) # TODO: fix color decoding!
 
-        # Obtain generator in list form
-        point_gen = pc2.read_points(pc, skip_nans=True)
-        int_data = list(point_gen)
+        return points, points_rgb
 
-        for point in int_data:
-            point_data = point[3]
-
-            # Cast float32 to int so bitwise operations are possible
-            s = struct.pack('>f', point_data)
-            i = struct.unpack('>l', s)[0]
-            # Get colors in uint format
-            pack = ctypes.c_uint32(i).value
-            r = (pack & 0x00FF0000)>> 16
-            g = (pack & 0x0000FF00)>> 8
-            b = (pack & 0x000000FF)
-
-            # xyz can be retrieved from point with index 0 to 2
-            xyz = np.append(xyz, [[point[0], point[1], point[2]]], axis=0)
-            rgb = np.append(rgb, [[r, g, b]], axis=0)
-
-        # Remove the first 0,0,0 point
-        xyz = xyz[1:]
-        rgb = rgb[1:]
-
-        return xyz, rgb
 
 if __name__ == "__main__":
 
