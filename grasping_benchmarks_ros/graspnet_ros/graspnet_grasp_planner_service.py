@@ -369,12 +369,18 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             rows are rgb
         """
 
-        pc_data = ros_numpy.numpify(pc) # TODO: fix color decoding as with this method colors result in NaNs
+        pc_data = ros_numpy.numpify(pc)
 
         # Decode x,y,z
         points_xyz = np.column_stack(([pc_data['x'], pc_data['y'], pc_data['z']]))
 
-        return points, points_rgb
+        # Decode r,g,b
+        points_r = ( pc_data['rgba'] & 0x00FF0000 ) >> 16
+        points_g = ( pc_data['rgba'] & 0x0000FF00 ) >> 8
+        points_b = ( pc_data['rgba'] & 0x000000FF )
+        points_rgb = np.column_stack((points_r, points_g, points_b))
+
+        return points_xyz, points_rgb
 
 
 if __name__ == "__main__":
