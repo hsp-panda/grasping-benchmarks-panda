@@ -369,18 +369,21 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             rows are rgb
         """
 
-        pc_data = ros_numpy.numpify(pc)
+        pc_data = ros_numpy.point_cloud2.pointcloud2_to_array(pc)
 
         # Decode x,y,z
-        points_xyz = np.column_stack(([pc_data['x'], pc_data['y'], pc_data['z']]))
+        # NaNs are removed later
+        points_xyz = ros_numpy.point_cloud2.get_xyz_points(pc_data, remove_nans=False)
 
         # Decode r,g,b
-        points_r = ( pc_data['rgba'] & 0x00FF0000 ) >> 16
-        points_g = ( pc_data['rgba'] & 0x0000FF00 ) >> 8
-        points_b = ( pc_data['rgba'] & 0x000000FF )
-        points_rgb = np.column_stack((points_r, points_g, points_b))
+        pc_data_rgb_split = ros_numpy.point_cloud2.split_rgb_field(pc_data)
+        points_rgb = np.column_stack((pc_data_rgb_split['r'], pc_data_rgb_split['g'], pc_data_rgb_split['b']))
 
-        return points_xyz, points_rgb
+        # Find NaNs and get remove their indexes
+        valid_point_indexes = np.invert(np.argwhere(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
+        valid_point_indexes = np.reshape(valid_point_indexes, valid_point_indexes.shape[0])
+
+        return points_xyz[valid_point_indexes], points_rgb[valid_point_indexes]
 
 
 if __name__ == "__main__":
