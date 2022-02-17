@@ -18,7 +18,7 @@ import ros_numpy
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Header
 
-from grasping_benchmarks_ros.srv import GraspPlannerCloud
+from grasping_benchmarks_ros.srv import GraspPlanner
 from grasping_benchmarks_ros.msg import BenchmarkGrasp
 
 import superquadric_bindings  as sb
@@ -48,7 +48,7 @@ class SuperquadricGraspPlannerService(SuperquadricsGraspPlanner):
             self.grasp_pose_publisher = rospy.Publisher(grasp_publisher_name, PoseStamped, queue_size=10)
 
         # Initialize the ROS service.
-        self._grasp_planning_service = rospy.Service(grasp_service_name, GraspPlannerCloud,
+        self._grasp_planning_service = rospy.Service(grasp_service_name, GraspPlanner,
                                             self.plan_grasp_handler)
 
         self._visualizer = []

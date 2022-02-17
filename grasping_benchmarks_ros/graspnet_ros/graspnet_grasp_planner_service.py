@@ -13,6 +13,7 @@ import time
 from threading import Lock
 
 from cv_bridge import CvBridge, CvBridgeError
+import ros_numpy
 import numpy as np
 import cv_bridge
 import rospy
@@ -307,7 +308,7 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
         return response
 
     def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
-        """Naive conversion from PointCloud2 to a numpy format
+        """Conversion from PointCloud2 to a numpy format
 
         Parameters
         ----------
@@ -321,37 +322,22 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             rows are rgb
         """
 
-        if pc is None:
-            return None, None
+        pc_data = ros_numpy.point_cloud2.pointcloud2_to_array(pc)
 
-        xyz = np.array([[0,0,0]])
-        rgb = np.array([[0,0,0]])
+        # Decode x,y,z
+        # NaNs are removed later
+        points_xyz = ros_numpy.point_cloud2.get_xyz_points(pc_data, remove_nans=False)
 
-        # Obtain generator in list form
-        point_gen = pc2.read_points(pc, skip_nans=True)
-        int_data = list(point_gen)
+        # Decode r,g,b
+        pc_data_rgb_split = ros_numpy.point_cloud2.split_rgb_field(pc_data)
+        points_rgb = np.column_stack((pc_data_rgb_split['r'], pc_data_rgb_split['g'], pc_data_rgb_split['b']))
 
-        for point in int_data:
-            point_data = point[3]
+        # Find NaNs and get remove their indexes
+        valid_point_indexes = np.invert(np.argwhere(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
+        valid_point_indexes = np.reshape(valid_point_indexes, valid_point_indexes.shape[0])
 
-            # Cast float32 to int so bitwise operations are possible
-            s = struct.pack('>f', point_data)
-            i = struct.unpack('>l', s)[0]
-            # Get colors in uint format
-            pack = ctypes.c_uint32(i).value
-            r = (pack & 0x00FF0000)>> 16
-            g = (pack & 0x0000FF00)>> 8
-            b = (pack & 0x000000FF)
+        return points_xyz[valid_point_indexes], points_rgb[valid_point_indexes]
 
-            # xyz can be retrieved from point with index 0 to 2
-            xyz = np.append(xyz, [[point[0], point[1], point[2]]], axis=0)
-            rgb = np.append(rgb, [[r, g, b]], axis=0)
-
-        # Remove the first 0,0,0 point
-        xyz = xyz[1:]
-        rgb = rgb[1:]
-
-        return xyz, rgb
 
 if __name__ == "__main__":
 
