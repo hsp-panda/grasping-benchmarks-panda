@@ -211,6 +211,15 @@ It is the main actor of the framework, connecting the different modules and send
 
 1. Launch your robot control and motion planning stack (or just use [our primitive handling server](https://github.com/hsp-panda/panda_grasp_server), it's free!)
 
+2. (Optional) If you are using the Docker images, spinning up the images require a bunch of additional arguments and flags in addition to the `docker run` / `docker start` commands. We provide this as a comfy [`run.sh`](./docker/run.sh) script. Assuming you wish to run the image containing algorithm `ALGORITHM_NAME` as `USER`, you can execute
+```
+./run.sh $USER ${ALGORITHM_NAME}-container ${USER}/benchmark_${ALGORITHM_NAME}
+```
+In case `${ALGORITHM_NAME}-container` already exists (e.g. you simply want to open another shell in it), you can just use
+```
+./run.sh $USER ${ALGORITHM_NAME}-container
+```
+
 2. Run the benchmarks framework.
     - You may need to set the correct paths to the models/config files in [grasping_benchmarks_ros/launch/grasp_planning_benchmark.launch](./grasping_benchmarks_ros/launch/grasp_planning_benchmark.launch)
 
