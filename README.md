@@ -92,7 +92,7 @@ Follow these instructions if you want to install also the ROS (no ROS2 yet, sorr
 
 4. Clone the repository:
     ```bash
-    $ wstool set -y src/grasping-benchmarks-panda --git https://github.com/robotology/grasping-benchmarks-panda
+    $ wstool set -y src/grasping-benchmarks-panda --git https://github.com/hsp-panda/grasping-benchmarks-panda
     $ wstool up
     ```
 
@@ -125,7 +125,7 @@ If you don't want to bother with manually setting everything up, we advise using
 
 1. Clone the repository:
     ```bash
-    $ https://github.com/robotology/grasping-benchmarks-panda.git
+    $ https://github.com/hsp-panda/grasping-benchmarks-panda.git
     $ cd grasping-benchmarks-panda/docker
     ```
 
