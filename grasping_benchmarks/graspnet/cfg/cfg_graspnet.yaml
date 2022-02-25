@@ -12,6 +12,7 @@ generate_dense_grasps: False
 batch_size: 30
 train_data: False
 
+
 # visualization
 vis:
   grasp_sampling : 0
