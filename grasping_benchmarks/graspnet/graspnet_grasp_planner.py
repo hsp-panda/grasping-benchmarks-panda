@@ -15,15 +15,17 @@ from grasping_benchmarks.base.grasp import Grasp6D
 from grasping_benchmarks.base import transformations as tr
 
 import mayavi.mlab as mlab
+import tensorflow as tf
 
 # Import the GraspNet implementation code
 # Requires a GRASPNET_DIR environment variable pointing to the root of the repo
 sys.path.append(os.environ['GRASPNET_DIR'])
 os.chdir(os.environ['GRASPNET_DIR'])
-from demo.main import get_color_for_pc, backproject
+from demo.main import get_color_for_pc, backproject, make_parser
 import grasp_estimator
-import utils.utils as utils
-import utils.visualization_utils as visu_utils
+# import utils as utils
+import visualization_utils 
+import ipdb
 
 class GraspNetGraspPlanner(BaseGraspPlanner):
     """Grasp planner based on 6Dof-GraspNet
@@ -56,6 +58,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self.latest_grasps = []
         self.latest_grasp_scores = []
         self.n_of_candidates = 1
+        
 
 
     def configure(self, cfg : dict):
@@ -68,16 +71,19 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
         # Create a namespace from the config dict
         # Since the GraspNet implementation uses a namespace
+
+
         self.cfg_ns = SimpleNamespace(**self.cfg)
+        print('you are here')
+        self.cfg_grasp_estimator = grasp_estimator.joint_config(
+            self.cfg_ns.vae_checkpoint_folder,
+            self.cfg_ns.evaluator_checkpoint_folder,
+        )      
+        self.cfg_grasp_estimator['threshold'] = self.cfg_ns.threshold
+        self.cfg_grasp_estimator['sample_based_improvement'] = 1 - int(self.cfg_ns.gradient_based_refinement)
+        self.cfg_grasp_estimator['num_refine_steps'] = 10 if self.cfg_ns.gradient_based_refinement else 20
+        print(self.cfg_grasp_estimator)  
 
-        self.grasp_sampler_args = utils.read_checkpoint_args(self.cfg_ns.grasp_sampler_folder)
-        self.grasp_sampler_args.is_train = False
-        self.grasp_evaluator_args = utils.read_checkpoint_args(self.cfg_ns.grasp_evaluator_folder)
-        self.grasp_evaluator_args.continue_train = True
-
-        self.estimator = grasp_estimator.GraspEstimator(self.grasp_sampler_args,
-                                                        self.grasp_evaluator_args,
-                                                        self.cfg_ns)
 
 
     def create_camera_data(self, rgb_image : np.ndarray, depth_image : np.ndarray, cam_intrinsic_frame :str, cam_extrinsic_matrix : np.ndarray,
@@ -188,8 +194,40 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
         self.n_of_candidates = n_candidates
 
+    
+        self.estimator = grasp_estimator.GraspEstimator(self.cfg_grasp_estimator)
         # Compute grasps according to the pytorch implementation
-        self.latest_grasps, self.latest_grasp_scores = self.estimator.generate_and_refine_grasps(self.object_pc)
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        self.estimator.build_network()
+        self.estimator.load_weights(sess)
+
+
+        # # Depending on your numpy version you may need to change allow_pickle
+        # # from True to False.
+
+        # data = np.load('/workspace/sources/6dof-graspnet/demo/data/cheezit.npy', allow_pickle=True,  encoding='latin1').item()
+        # print(data.keys())
+        # depth = data['depth']
+        # image = data['image']
+        # K = data['intrinsics_matrix']
+        # # Removing points that are farther than 1 meter or missing depth 
+        # # values.
+        # depth[depth == 0] = np.nan
+        # depth[depth > 1] = np.nan
+        # pc, selection = backproject(depth, K, return_finite_depth=True, return_selection=True)
+        # pc_colors = image.copy()
+        # pc_colors = np.reshape(pc_colors, [-1, 3])
+        # pc_colors = pc_colors[selection, :]
+
+        # # Smoothed pc comes from averaging the depth for 10 frames and removing
+        # # the pixels with jittery depth between those 10 frames.
+        # object_pc2 = data['smoothed_object_pc']
+
+   
+        self.latest_grasps, self.latest_grasp_scores, output_latents = self.estimator.predict_grasps(sess,self.object_pc,self.estimator.sample_latents(),self.cfg_grasp_estimator.num_refine_steps)
+        ipdb.set_trace()    
         self.grasp_poses.clear()
 
         # Sort grasps from best to worst
@@ -233,7 +271,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         candidates_to_display = self.n_of_candidates if ((self.n_of_candidates > 0) and (self.n_of_candidates < len(self.latest_grasps)) and not visualize_all) else len(self.latest_grasps)
 
         mlab.figure(bgcolor=(1,1,1))
-        visu_utils.draw_scene(
+        visualization_utils.draw_scene(
             pc=self.scene_pc,
             grasps=self.latest_grasps[:candidates_to_display],
             grasp_scores=self.latest_grasp_scores[:candidates_to_display],
