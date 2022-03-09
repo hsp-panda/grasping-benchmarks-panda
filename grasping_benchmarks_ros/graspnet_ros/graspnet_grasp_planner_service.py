@@ -333,7 +333,7 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
         points_rgb = np.column_stack((pc_data_rgb_split['r'], pc_data_rgb_split['g'], pc_data_rgb_split['b']))
 
         # Find NaNs and get remove their indexes
-        valid_point_indexes = np.invert(np.argwhere(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
+        valid_point_indexes = np.argwhere(np.invert(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
         valid_point_indexes = np.reshape(valid_point_indexes, valid_point_indexes.shape[0])
 
         return points_xyz[valid_point_indexes], points_rgb[valid_point_indexes]
