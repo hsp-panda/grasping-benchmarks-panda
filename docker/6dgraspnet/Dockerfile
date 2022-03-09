@@ -105,6 +105,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
     rosdep update &&\
     echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /etc/bash.bashrc
 
+
 # Set workspace directories
 # =========================
 ENV WS_DIR=/workspace
