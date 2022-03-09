@@ -5,6 +5,7 @@ threshold: 0.7
 vae_checkpoint_folder: /workspace/sources/6dof-graspnet/checkpoints/ACRONYM_GAN/
 
 
+
 # visualization
 vis:
   grasp_sampling : 0
