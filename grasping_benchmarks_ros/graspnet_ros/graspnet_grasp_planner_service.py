@@ -307,8 +307,9 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
 
         return response
 
+
     def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
-        """Conversion from PointCloud2 to a numpy format
+        """Naive conversion from PointCloud2 to a numpy format
 
         Parameters
         ----------
@@ -322,21 +323,69 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
             rows are rgb
         """
 
-        pc_data = ros_numpy.point_cloud2.pointcloud2_to_array(pc)
+        if pc is None:
+            return None, None
 
-        # Decode x,y,z
-        # NaNs are removed later
-        points_xyz = ros_numpy.point_cloud2.get_xyz_points(pc_data, remove_nans=False)
+        xyz = np.array([[0,0,0]])
+        rgb = np.array([[0,0,0]])
 
-        # Decode r,g,b
-        pc_data_rgb_split = ros_numpy.point_cloud2.split_rgb_field(pc_data)
-        points_rgb = np.column_stack((pc_data_rgb_split['r'], pc_data_rgb_split['g'], pc_data_rgb_split['b']))
+        # Obtain generator in list form
+        point_gen = pc2.read_points(pc, skip_nans=True)
+        int_data = list(point_gen)
 
-        # Find NaNs and get remove their indexes
-        valid_point_indexes = np.invert(np.argwhere(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
-        valid_point_indexes = np.reshape(valid_point_indexes, valid_point_indexes.shape[0])
+        for point in int_data:
+            point_data = point[3]
 
-        return points_xyz[valid_point_indexes], points_rgb[valid_point_indexes]
+            # Cast float32 to int so bitwise operations are possible
+            s = struct.pack('>f', point_data)
+            i = struct.unpack('>l', s)[0]
+            # Get colors in uint format
+            pack = ctypes.c_uint32(i).value
+            r = (pack & 0x00FF0000)>> 16
+            g = (pack & 0x0000FF00)>> 8
+            b = (pack & 0x000000FF)
+
+            # xyz can be retrieved from point with index 0 to 2
+            xyz = np.append(xyz, [[point[0], point[1], point[2]]], axis=0)
+            rgb = np.append(rgb, [[r, g, b]], axis=0)
+
+        # Remove the first 0,0,0 point
+        xyz = xyz[1:]
+        rgb = rgb[1:]
+
+        return xyz, rgb
+
+
+    # def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
+    #     """Conversion from PointCloud2 to a numpy format
+
+    #     Parameters
+    #     ----------
+    #     pc : PointCloud2
+    #         Scene or object pc
+
+    #     Returns
+    #     -------
+    #     Tuple[np.array, np.array]
+    #         Point cloud in a nx3 array, where rows are xyz, and nx3 array where
+    #         rows are rgb
+    #     """
+
+    #     pc_data = ros_numpy.point_cloud2.pointcloud2_to_array(pc)
+
+    #     # Decode x,y,z
+    #     # NaNs are removed later
+    #     points_xyz = ros_numpy.point_cloud2.get_xyz_points(pc_data, remove_nans=False)
+
+    #     # Decode r,g,b
+    #     pc_data_rgb_split = ros_numpy.point_cloud2.split_rgb_field(pc_data)
+    #     points_rgb = np.column_stack((pc_data_rgb_split['r'], pc_data_rgb_split['g'], pc_data_rgb_split['b']))
+
+    #     # Find NaNs and get remove their indexes
+    #     valid_point_indexes = np.invert(np.argwhere(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
+    #     valid_point_indexes = np.reshape(valid_point_indexes, valid_point_indexes.shape[0])
+
+    #     return points_xyz[valid_point_indexes], points_rgb[valid_point_indexes]
 
 
 if __name__ == "__main__":
