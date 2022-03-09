@@ -131,32 +131,89 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
+
+
 # Install 6DoFGraspNet and related dependencies
 # =============================================
-RUN apt-get update &&\
-    pip3 install vtk==8.1.0 PyQt5 torch==1.4.0+cu100 \
-        torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
-    pip3 install --ignore-installed PyYAML==5.4.1 &&\
-    rm -rf /var/lib/apt/lists/*
+RUN  pip3 install tensorflow-gpu==1.13.1 &&\
+     pip3 install --upgrade --no-cache-dir gdown &&\
+     pip3 install opencv-python==4.1.2.30 &&\
+     pip3 install PyQt5 &&\
+     pip3 install h5py==2.10.0 &&\
+     pip3 install tqdm==4.45.0 &&\
+     pip3 install vtk==8.1.0 &&\
+     pip3 install mayavi==4.7.1 &&\
+     pip3 install --ignore-installed PyYAML==5.2 &&\
+     pip3 install trimesh==3.6.30 &&\
+     pip3 install numpy==1.17.4 &&\
+     pip3 install pyrender==0.1.39 &&\
+     pip3 install matplotlib==3.1.1 &&\
+     pip3 install easydict==1.9 &&\
+     pip3 install opencv-python==4.1.2.30 &&\
+     pip3 install tensorboardX==2.0 &&\
+     pip3 install python-fcl==0.6.1 &&\
+     pip3 install Rtree==0.9.7      
 
-RUN mkdir -p ${WS_SOURCES} && \
-    cd ${WS_SOURCES} &&\
-    git clone https://github.com/jsll/pytorch_6dof-graspnet.git &&\
-    git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
-    cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
-    cd ../pytorch_6dof-graspnet &&\
-    pip3 install -r requirements.txt &&\
-    sh checkpoints/download_models.sh
+     
+RUN mkdir -p ${WS_SOURCES} &&\
+     cd ${WS_SOURCES} &&\
+     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash &&\
+     apt-get install git-lfs
+     
+RUN cd ${WS_SOURCES} &&\
+    git lfs clone https://github.com/NvLabs/6dof-graspnet &&\
+    git clone --branch python3-compatable https://github.com/irfan798/pointnet2.git &&\
+    cd 6dof-graspnet/ &&\
+    sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
+    sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
+    sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
+    sed -i "s/'num_samples'] = 200/'num_samples'] = 20/g" grasp_estimator.py &&\    
+    gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing &&\
+    cd ../pointnet2/tf_ops/sampling/ &&\
+    sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' tf_sampling_compile.sh &&\
+    sed -i "s;with tf.device('/gpu:1');with tf.device('/gpu:0');g" tf_sampling.py &&\
+    sed -i "s/import cPickle as pickle/import pickle/g" tf_sampling.py &&\
+    cd ../grouping &&\
+    sed -i "s/print points/print (points)/g" tf_grouping_op_test.py &&\
+    sed -i "s/print grouped_points/print (grouped_points)/g" tf_grouping_op_test.py &&\
+    sed -i 's;print "---- Going to compute gradient error";print ("---- Going to compute gradient error");g' tf_grouping_op_test.py &&\
+    sed -i 's;print err;print (err);g' tf_grouping_op_test.py &&\
+    cd ../3d_interpolation &&\
+    sed -i 's;print points;print (points);g' tf_interpolate_op_test.py &&\
+    sed -i 's;print interpolated_points;print (interpolated_points);g' tf_interpolate_op_test.py &&\
+    sed -i 's;print err;print (err);g' tf_interpolate_op_test.py &&\
+    cd ../../../6dof-graspnet/
+#    sh compile_pointnet_tfops.sh
 
-ENV GRASPNET_DIR=${WS_SOURCES}/pytorch_6dof-graspnet
+
+#### to delete (graspnet pytorch)#####
+#RUN apt-get update &&\
+#    pip3 install vtk==8.1.0 PyQt5 torch==1.4.0+cu100 \
+#        torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
+#    pip3 install --ignore-installed PyYAML==5.4.1 &&\
+#    rm -rf /var/lib/apt/lists/*
+
+#RUN mkdir -p ${WS_SOURCES} && \
+#    cd ${WS_SOURCES} &&\
+#    git clone https://github.com/jsll/pytorch_6dof-graspnet.git &&\
+#    git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
+#    cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
+#    cd ../pytorch_6dof-graspnet &&\
+#    pip3 install -r requirements.txt &&\
+#    sh checkpoints/download_models.sh
+###################################
+
+ENV GRASPNET_DIR=${WS_SOURCES}/6dof-graspnet
 
 # # Install benchmark-grasping
 # # ==========================
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
-    git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
+    git clone https://github.com/Ale909/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
+    apt-get install ros-melodic-ros-numpy &&\
+    rosdep update &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
     catkin build  -j8 && \
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
@@ -171,6 +228,9 @@ RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
+
+
+##############################################
 # Image initialization
 # ====================
 ENV USERNAME=docker
@@ -184,3 +244,13 @@ RUN chmod 755 /usr/sbin/setup.sh
 RUN chmod 755 /usr/sbin/entrypoint.sh
 ENTRYPOINT ["/usr/sbin/entrypoint.sh"]
 CMD ["bash"]
+
+
+
+#RUN sudo find /usr/ -name 'libcuda.so.1'
+#RUN cp /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/local/cuda-10.0/compat/libcuda.so.1
+
+
+#RUN cd ${WS_SOURCES} &&\
+#    cd 6dof-graspnet/ &&\
+#    sh compile_pointnet_tfops.sh
