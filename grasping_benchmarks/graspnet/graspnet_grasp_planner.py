@@ -27,6 +27,87 @@ import grasp_estimator
 import visualization_utils 
 import ipdb
 
+
+class ArucoBoardData:
+    position = None
+    orientation = None
+
+
+def transform_grasp_and_offset_to_world(grasping_pose, offset,camera_pose):
+    """Transform the 6D grasp pose in the world reference frame, given the
+    camera viewpoint
+
+    Parameters
+    ----------
+    grasp_pose : grasp_6d
+        Candidate grasp pose, in the camera ref frame
+    camera_pose : camera_pose
+        Camera pose wrt world ref frame
+
+    Returns
+    -------
+    PoseStamped
+        Candidate grasp pose, in the world reference frame
+    """
+
+    # w_T_cam : camera pose in world ref frame
+    # cam_T_grasp : grasp pose in camera ref frame
+    # w_T_grasp = w_T_cam * cam_T_grasp
+
+    # Construct the 4x4 affine transf matrices from ROS stamped poses
+
+    cam_T_grasp = np.eye(4)
+    cam_T_grasp[:3,:3] = grasping_pose.rotation
+    cam_T_grasp[:3,3] = grasping_pose.position
+
+    grasp_offset = np.eye(4)
+    grasp_offset[:3,3] = offset
+    cam_T_grasp = np.matmul(cam_T_grasp, grasp_offset)
+
+    w_T_cam = np.eye(4)
+    w_T_cam[:3,:3] = camera_pose.extrinsic_params['rotation']
+    w_T_cam[:3,3] = camera_pose.extrinsic_params['position']
+
+    # Obtain the w_T_grasp affine transformation
+    w_T_grasp = np.matmul(w_T_cam, cam_T_grasp)
+
+    
+
+
+    return w_T_grasp   
+
+def check_collision_between_gripper_and_table(grasping_pose,camera_pose, aruco_board_data):
+    
+    offset_distance = 0.01
+    check_points = np.matrix([[0.03, 0.11, -0.13],
+                             [0.03, -0.11, -0.13],
+                             [-0.03, 0.11, -0.13],
+                             [-0.03, -0.11, -0.13],    
+                             [0.03, 0.11, 0.01],
+                             [0.03, -0.11, 0.01],  
+                             [-0.03, 0.11, 0.01],
+                             [-0.03, -0.11, 0.01]])     
+
+    collisions = np.full((1,len(check_points)),True)                         
+    
+    for i in range(len(check_points)):
+       check_point_in_wrf = transform_grasp_and_offset_to_world(grasping_pose, check_points[i,:],camera_pose)
+
+       if i<=3:
+            if check_point_in_wrf[2,3] > aruco_board_data.position.z + offset_distance:
+               collisions[0,i] = False
+       elif i>3:      
+            if check_point_in_wrf[2,3] > aruco_board_data.position.z:
+               collisions[0,i] = False
+    
+    true_collisions = np.where(collisions==True)
+
+    if (true_collisions[0].size == 0):
+        return False
+    else:
+        return True    
+
+
 class GraspNetGraspPlanner(BaseGraspPlanner):
     """Grasp planner based on 6Dof-GraspNet
 
@@ -59,7 +140,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self.latest_grasp_scores = []
         self.n_of_candidates = 1
         
-
+        self._aruco_board_data = ArucoBoardData()
 
     def configure(self, cfg : dict):
         """Additional class configuration
@@ -175,8 +256,16 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self._camera_data = camera_data
         return camera_data
 
+    def create_aruco_board_data(self, pose : np.ndarray, orientation : np.ndarray) -> ArucoBoardData:
+        aruco_board_data = ArucoBoardData()
+        aruco_board_data.position = pose
+        aruco_board_data.orientation = orientation
 
-    def plan_grasp(self, camera_data : CameraData, n_candidates : int) -> bool:
+        self._aruco_board_data = aruco_board_data
+        return aruco_board_data    
+
+
+    def plan_grasp(self, camera_data : CameraData,aruco_board_data : ArucoBoardData, n_candidates : int) -> bool:
         """Plan grasps according to visual data. Grasps are returned with
         respect to the camera reference frame
 
@@ -227,7 +316,6 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
    
         self.latest_grasps, self.latest_grasp_scores, output_latents = self.estimator.predict_grasps(sess,self.object_pc,self.estimator.sample_latents(),self.cfg_grasp_estimator.num_refine_steps)
-        ipdb.set_trace()    
         self.grasp_poses.clear()
 
         # Sort grasps from best to worst
@@ -242,7 +330,10 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         # Organize grasps in a Grasp class
         # Grasps are specified wrt the camera ref frame
 
-        for grasp,score in zip(self.latest_grasps[:n_candidates], self.latest_grasp_scores[:n_candidates]):
+        filtered_latest_grasps = []
+        filtered_latest_grasp_scores = []
+
+        for grasp,score in zip(self.latest_grasps, self.latest_grasp_scores):
             # Grasps should already be in 6D as output
             # A 90 degrees offset is applied to account for the difference in
             # reference frame (see
@@ -258,8 +349,15 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
                                rotation=grasp_with_offset[:3,:3],
                                width=0, score=score,
                                ref_frame=camera_data.intrinsic_params['frame'])
-            self.grasp_poses.append(grasp_6d)
 
+            if check_collision_between_gripper_and_table(grasp_6d, camera_data, aruco_board_data) == False:
+               self.grasp_poses.append(grasp_6d)
+               filtered_latest_grasps.append(grasp)
+               filtered_latest_grasp_scores.append(score)
+
+        self.latest_grasps = filtered_latest_grasps
+        self.latest_grasp_scores = filtered_latest_grasp_scores
+        self.grasp_poses = self.grasp_poses[0:n_candidates]
         self.best_grasp = self.grasp_poses[0]
 
         return True

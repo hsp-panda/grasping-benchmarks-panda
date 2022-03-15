@@ -10,6 +10,7 @@ sensor_msgs/CameraInfo camera_info
 # pointcloud and viewpoint
 sensor_msgs/PointCloud2 cloud
 geometry_msgs/PoseStamped view_point # where the point cloud was acquired. Default is origin
+geometry_msgs/Pose aruco_board
 
 # number of candidates to return
 int16 n_of_candidates
