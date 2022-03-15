@@ -1,7 +1,7 @@
 evaluator_checkpoint_folder: /workspace/sources/6dof-graspnet/checkpoints/ACRONYM_Evaluator/
 gradient_based_refinement: False
 npy_folder: /demo/data/
-threshold: 0.7
+threshold: -1
 vae_checkpoint_folder: /workspace/sources/6dof-graspnet/checkpoints/ACRONYM_GAN/
 
 

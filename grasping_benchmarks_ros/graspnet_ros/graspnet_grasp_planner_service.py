@@ -159,8 +159,8 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
 
     def read_aruco_board(self, req : GraspPlannerRequest):
 
-        aruco_board_data = self.create_aruco_board_data(req.aruco_board.position, req.aruco_board.orientation)
-    
+        aruco_board_data = self.create_aruco_board_data(req.aruco_board.position, req.aruco_board.orientation, req.grasp_filter_flag)
+   
         return aruco_board_data
 
     def plan_grasp_handler(self, req : GraspPlannerRequest) -> GraspPlannerResponse:
