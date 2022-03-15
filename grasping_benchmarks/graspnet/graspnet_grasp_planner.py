@@ -25,12 +25,12 @@ from demo.main import get_color_for_pc, backproject, make_parser
 import grasp_estimator
 # import utils as utils
 import visualization_utils 
-import ipdb
 
 
 class ArucoBoardData:
     position = None
     orientation = None
+    enable_grasp_filter = None
 
 
 def transform_grasp_and_offset_to_world(grasping_pose, offset,camera_pose):
@@ -256,10 +256,12 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self._camera_data = camera_data
         return camera_data
 
-    def create_aruco_board_data(self, pose : np.ndarray, orientation : np.ndarray) -> ArucoBoardData:
+    def create_aruco_board_data(self, pose : np.ndarray, orientation : np.ndarray, enable_grasp_filter_flag : bool) -> ArucoBoardData:
         aruco_board_data = ArucoBoardData()
         aruco_board_data.position = pose
         aruco_board_data.orientation = orientation
+        aruco_board_data.enable_grasp_filter = enable_grasp_filter_flag
+
 
         self._aruco_board_data = aruco_board_data
         return aruco_board_data    
@@ -350,13 +352,18 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
                                width=0, score=score,
                                ref_frame=camera_data.intrinsic_params['frame'])
 
-            if check_collision_between_gripper_and_table(grasp_6d, camera_data, aruco_board_data) == False:
-               self.grasp_poses.append(grasp_6d)
-               filtered_latest_grasps.append(grasp)
-               filtered_latest_grasp_scores.append(score)
-
-        self.latest_grasps = filtered_latest_grasps
-        self.latest_grasp_scores = filtered_latest_grasp_scores
+            if (aruco_board_data.enable_grasp_filter==True):
+                if check_collision_between_gripper_and_table(grasp_6d, camera_data, aruco_board_data) == False:
+                    self.grasp_poses.append(grasp_6d)
+                    filtered_latest_grasps.append(grasp)
+                    filtered_latest_grasp_scores.append(score)
+            else: 
+                self.grasp_poses.append(grasp_6d)   
+        
+        if (aruco_board_data.enable_grasp_filter==True):
+            self.latest_grasps = filtered_latest_grasps
+            self.latest_grasp_scores = filtered_latest_grasp_scores
+        
         self.grasp_poses = self.grasp_poses[0:n_candidates]
         self.best_grasp = self.grasp_poses[0]
 
