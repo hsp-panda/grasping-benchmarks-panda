@@ -84,6 +84,7 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
         self._grasp_planning_service = rospy.Service(grasp_service_name, GraspPlanner,
                                             self.plan_grasp_handler)
 
+
     def read_images(self, req : GraspPlannerRequest):
         """Read images as a CameraData class from a service request
 
