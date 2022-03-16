@@ -90,8 +90,8 @@ class SuperquadricsGraspPlanner(BaseGraspPlanner):
 
         Parameters
         ---------
-            pointcloud (np.ndarray): array of 3D points
-            colors (np.ndarray):array of RGB colors
+            pointcloud (np.ndarray): array of 3D points of shape (n,3)
+            colors (np.ndarray):array of RGB colors of shape (n,3)
             cam_pos (np.ndarray): 3D position of the camera expressed wrt the robot base
             cam_quat (np.ndarray): quaternion (x, y, z, w) of the camera orientation expressed wrt the robot base
 
@@ -122,26 +122,27 @@ class SuperquadricsGraspPlanner(BaseGraspPlanner):
         sb_points = sb.deque_Vector3d()
         sb_colors = sb.vector_vector_uchar()
 
-        for i in range(0, pointcloud.shape[1]):
-            for j in range(0, pointcloud.shape[2]):
-                pt = np.array([pointcloud[0][i][j], pointcloud[1][i][j], pointcloud[2][i][j]])
+        for i in range(0, pointcloud.shape[0]):
 
-                icub_pt = icub_T_cam.dot(np.append(pt, 1))
-                if np.isnan(icub_pt[0]):
-                    continue
+            pt = np.array([pointcloud[i,0], pointcloud[i,1], pointcloud[i,2]])
 
-                if colors.size != 0:
-                    col = colors[i][:3]
-                    if type(col) is np.ndarray:
-                        col = col.astype(int)
-                        col = col.tolist()
-                    else:
-                        col = [int(c) for c in col]
+            icub_pt = icub_T_cam.dot(np.append(pt, 1))
+            if np.isnan(icub_pt[0]):
+                continue
+
+            if colors.size != 0:
+                col = colors[i][:3]
+                if type(col) is np.ndarray:
+                    col = col.astype(int)
+                    col = col.tolist()
                 else:
-                    col = [255,255,0]
+                    col = [int(c) for c in col]
+            else:
+                col = [255,255,0]
 
-                sb_points.push_back(icub_pt[:3])
-                sb_colors.push_back(col)
+            sb_points.push_back(icub_pt[:3])
+            sb_colors.push_back(col)
+
 
         if sb_points.size() >= self.cfg['sq_model']['minimum_points']:
             self._pointcloud.setPoints(sb_points)

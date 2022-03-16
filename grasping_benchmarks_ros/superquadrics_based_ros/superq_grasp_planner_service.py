@@ -17,6 +17,7 @@ import ros_numpy
 
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Header
+from sensor_msgs.msg import PointCloud2
 
 from grasping_benchmarks_ros.srv import GraspPlanner
 from grasping_benchmarks_ros.msg import BenchmarkGrasp
@@ -64,14 +65,17 @@ class SuperquadricGraspPlannerService(SuperquadricsGraspPlanner):
         """
         # Get the ROS data
         ros_cloud = req.cloud
-        cam_position = np.array([req.view_point.position.x, req.view_point.position.y, req.view_point.position.z])
-        cam_quat = np.array([req.view_point.orientation.x, req.view_point.orientation.y,
-                             req.view_point.orientation.z, req.view_point.orientation.w])
+        cam_position = np.array([req.view_point.pose.position.x,
+                                 req.view_point.pose.position.y,
+                                 req.view_point.pose.position.z])
+        cam_quat = np.array([req.view_point.pose.orientation.x,
+                             req.view_point.pose.orientation.y,
+                             req.view_point.pose.orientation.z,
+                             req.view_point.pose.orientation.w])
 
-        # pointcloud2 to numpy array
-        pc_data = ros_numpy.numpify(ros_cloud) # TODO: fix color decoding as with this method colors result in NaNs
+        # pointcloud2 to numpy array of shape (n_points, 3)
+        points = self.npy_from_pc2(ros_cloud)
 
-        points = np.array([pc_data['x'], pc_data['y'], pc_data['z']])
         camera_data = self.create_camera_data(points, cam_position, cam_quat)
 
         return camera_data
@@ -145,6 +149,37 @@ class SuperquadricGraspPlannerService(SuperquadricsGraspPlanner):
             self.grasp_pose_publisher.publish(p)
 
         return grasp_msg
+
+    def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
+        """Conversion from PointCloud2 to a numpy format
+
+        Parameters
+        ----------
+        pc : PointCloud2
+            Scene or object pc
+
+        Returns
+        -------
+        Tuple[np.array, np.array]
+            Point cloud in a nx3 array, where rows are xyz, and nx3 array where
+            rows are rgb
+        """
+
+        pc_data = ros_numpy.point_cloud2.pointcloud2_to_array(pc)
+
+        # Decode x,y,z
+        # NaNs are removed later
+        points_xyz = ros_numpy.point_cloud2.get_xyz_points(pc_data, remove_nans=False)
+
+        # Decode r,g,b
+        pc_data_rgb_split = ros_numpy.point_cloud2.split_rgb_field(pc_data)
+        points_rgb = np.column_stack((pc_data_rgb_split['r'], pc_data_rgb_split['g'], pc_data_rgb_split['b']))
+
+        # Find NaNs and get remove their indexes
+        valid_point_indexes = np.argwhere(np.invert(np.bitwise_or.reduce(np.isnan(points_xyz), axis=1)))
+        valid_point_indexes = np.reshape(valid_point_indexes, valid_point_indexes.shape[0])
+
+        return points_xyz[valid_point_indexes], points_rgb[valid_point_indexes]
 
 
 if __name__ == "__main__":
