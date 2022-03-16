@@ -74,7 +74,7 @@ class SuperquadricGraspPlannerService(SuperquadricsGraspPlanner):
                              req.view_point.pose.orientation.w])
 
         # pointcloud2 to numpy array of shape (n_points, 3)
-        points = self.npy_from_pc2(ros_cloud)
+        points = self.npy_from_pc2(ros_cloud)[0]
 
         camera_data = self.create_camera_data(points, cam_position, cam_quat)
 
