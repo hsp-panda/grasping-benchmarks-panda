@@ -56,24 +56,24 @@ class GraspingBenchmarksManager(object):
         self._grasp_planner = rospy.ServiceProxy(grasp_planner_service_name, GraspPlanner)
         rospy.loginfo("...Connected with service {}".format(grasp_planner_service_name))
 
-        # # --- panda service --- #
-        # panda_service_name =  "/panda_grasp_server/panda_grasp"
-        # rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
-        # rospy.wait_for_service(panda_service_name, timeout=60.0)
-        # self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
-        # rospy.loginfo("...Connected with service {}".format(panda_service_name))
+        # --- panda service --- #
+        panda_service_name =  "/panda_grasp_server/panda_grasp"
+        rospy.loginfo("GraspingBenchmarksManager: Waiting for panda control service...")
+        rospy.wait_for_service(panda_service_name, timeout=60.0)
+        self._panda = rospy.ServiceProxy(panda_service_name, PandaGrasp)
+        rospy.loginfo("...Connected with service {}".format(panda_service_name))
 
         # --- subscribers to camera topics --- #
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
         self._rgb_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         self._depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
-        # self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
-        self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
+        self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
+        # self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
         self._seg_sub = rospy.Subscriber('rgb/image_seg', Image, self.seg_img_callback, queue_size=10)
 
         # --- camera data synchronizer --- #
         self._tss = message_filters.ApproximateTimeSynchronizer([self._cam_info_sub, self._rgb_sub, self._depth_sub, self._pc_sub],
-                                                                queue_size=100, slop=0.5)
+                                                                queue_size=1, slop=0.5)
         self._tss.registerCallback(self._camera_data_callback)
 
         # --- robot/camera transform listener --- #
