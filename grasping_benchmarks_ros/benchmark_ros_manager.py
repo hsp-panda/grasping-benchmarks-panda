@@ -218,7 +218,18 @@ class GraspingBenchmarksManager(object):
             self._abort = True
             return Bool(True)
 
-    def get_best_grasp(self, grasps:list):
+    def get_best_grasp(self, grasps:list) -> BenchmarkGrasp:
+        """Returns the best grasp candidate in a list, according to its score
+
+        Parameters
+        ----------
+        grasps : list[BenchmarkGrasp]
+
+        Returns
+        -------
+        BenchmarkGrasp
+            The best grasp according to the planner's own score
+        """
 
         best_candidate = grasps[0]
 
@@ -228,11 +239,27 @@ class GraspingBenchmarksManager(object):
 
         return best_candidate
 
-    def dump_grasps(self, grasps:list):
+    def dump_grasps(self, grasps:list, dump_dir_base:str = "/workspace/dump_"):
+        """Dumps a list of grasp candidates to textfiles. Will generate
+        a grasp_candidates.txt, grasp_candidate_scores.txt, and a
+        grasp_candidates_width.txt.
+
+        Parameters
+        ----------
+        grasps : list[BenchmarkGrasp]
+            Grasp candidates to dump
+
+        dump_dir_base : str
+            Base path where to dump files
+
+        Returns
+        -------
+        Bool
+            Always true
+        """
 
         # Find a suitable dir to store candidates each time this function is called
         import os
-        dump_dir_base = '/workspace/dump_'
         dump_dir_idx = 0
         while (os.path.exists(dump_dir_base+str(dump_dir_idx))):
             dump_dir_idx+=1
