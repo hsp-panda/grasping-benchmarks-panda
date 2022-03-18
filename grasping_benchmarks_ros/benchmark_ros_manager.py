@@ -27,6 +27,7 @@ from sensor_msgs.point_cloud2 import read_points
 from geometry_msgs.msg import Transform, Pose, PoseStamped, TransformStamped
 from std_msgs.msg import Bool
 import copy
+from typing import List
 
 from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
 
@@ -302,7 +303,51 @@ class GraspingBenchmarksManager(object):
 
         return Bool(True)
 
-    def execute_grasp(self, grasp):
+    def get_feasible_grasps(self, grasps:list) -> list:
+        """Parse out the unfeasible grasp candidates from a list
+
+        Parameters
+        ----------
+        grasps : list[BenchmarkGrasp]
+           List of candidates to check
+
+        Returns
+        -------
+        list[BenchmarkGrasp]
+            List of feasible candidates according to the primitive server. Can be empty
+        """
+
+        feasible_candidates = []
+        for candidate in grasps:
+            if self.test_grasp_feasibility(candidate):
+                feasible_candidates.append(candidate)
+
+        return feasible_candidates
+
+    def test_grasp_feasibility(self, grasp:BenchmarkGrasp) -> bool:
+        """Queries the primitive server to understand if a valid trajectory to
+        the grasp exists (i.e. it is feasible on the real robot)
+
+        Parameters
+        ----------
+        grasp : BenchmarkGrasp
+            The grasp candidate
+
+        Returns
+        -------
+        bool
+            True if the candidate is feasible, false otherwise
+        """
+
+        grasp_request = PandaGraspRequest()
+        grasp_request.grasp = grasp.pose
+        grasp_request.width = grasp.width
+        grasp_request.plan_only = True
+
+        grasp_reply = self._panda(grasp_request)
+        return grasp_reply.success
+
+    def execute_grasp(self, grasp: BenchmarkGrasp):
         """Assumes the grasp pose is already in the root reference frame
 
         Parameters:
