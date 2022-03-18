@@ -39,7 +39,7 @@ from panda_grasp_srv.srv import PandaGrasp, PandaGraspRequest, PandaGraspRespons
 
 import numpy as np
 
-NUMBER_OF_CANDIDATES = 1
+NUMBER_OF_CANDIDATES = 10
 
 NEW_MSG = {
 "new_data": False,
@@ -208,10 +208,15 @@ class GraspingBenchmarksManager(object):
                 rospy.loginfo("grasp execution was aborted by the user")
                 return Bool(False)
 
-            # --- If the request is to execute a grasp, execute the first candidate
-            # TODO: not the first candidate, the best
+            # If we are required to grasp, test the feasibility of the candidates first
+            # and send the best grasp between the feasible candidates
             if req.cmd.data == "grasp":
-                return self.execute_grasp(self.get_best_grasp(reply.grasp_candidates))
+                feasible_candidates = self.get_feasible_grasps(reply.grasp_candidates)
+                rospy.loginfo(f"Feasible candidates: {len(feasible_candidates)}/{len(reply.grasp_candidates)}")
+                if not len(feasible_candidates):
+                    return False
+                else:
+                    return self.execute_grasp(self.get_best_grasp(feasible_candidates))
             else:
                 return self.dump_grasps(reply.grasp_candidates)
 
