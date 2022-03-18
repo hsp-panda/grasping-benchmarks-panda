@@ -42,8 +42,11 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 from autolab_core import YamlConfig
-from perception import (CameraIntrinsics, ColorImage, DepthImage, BinaryImage,
-                        RgbdImage)
+from autolab_core import CameraIntrinsics,
+                         ColorImage,
+                         DepthImage,
+                         BinaryImage,
+                         RgbdImage
 from visualization import Visualizer2D as vis
 from gqcnn.grasping import (Grasp2D, SuctionPoint2D, RgbdImageState,
                             RobustGraspingPolicy,
