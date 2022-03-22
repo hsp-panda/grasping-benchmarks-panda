@@ -262,6 +262,7 @@ RUN apt-get update &&\
 # ==========================
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
+    git clone https://github.com/hsp-panda/panda_ros_common &&\
     git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} && \

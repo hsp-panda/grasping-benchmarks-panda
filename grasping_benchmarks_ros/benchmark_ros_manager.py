@@ -15,8 +15,6 @@ Its features are:
 (4. assess if the grasp was successful or not)
 """
 
-from ast import dump
-from os import mkdir
 import rospy
 import warnings
 import message_filters
@@ -26,7 +24,6 @@ from sensor_msgs.msg import Image, PointCloud2, CameraInfo
 from sensor_msgs.point_cloud2 import read_points
 from geometry_msgs.msg import Transform, Pose, PoseStamped, TransformStamped
 from std_msgs.msg import Bool
-import copy
 from typing import List
 
 from grasping_benchmarks.base.transformations import quaternion_to_matrix, matrix_to_quaternion
@@ -35,7 +32,7 @@ from grasping_benchmarks_ros.srv import UserCmd, UserCmdRequest, UserCmdResponse
 from grasping_benchmarks_ros.srv import GraspPlanner, GraspPlannerRequest, GraspPlannerResponse
 from grasping_benchmarks_ros.msg import BenchmarkGrasp
 
-from panda_grasp_srv.srv import PandaGrasp, PandaGraspRequest, PandaGraspResponse
+from panda_ros_common.srv import PandaGrasp, PandaGraspRequest, PandaGraspResponse
 
 import numpy as np
 

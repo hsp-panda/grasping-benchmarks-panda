@@ -222,6 +222,7 @@ RUN apt-get update &&\
 #RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
+    git clone https://github.com/hsp-panda/panda_ros_common &&\
     git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
