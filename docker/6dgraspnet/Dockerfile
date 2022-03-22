@@ -125,8 +125,8 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
     wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
     wstool up &&\
-    apt-get install ros-melodic-ros-numpy &&\
     rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
+    apt-get install ros-melodic-ros-numpy &&\
     rm -rf /var/lib/apt/lists/* &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
     catkin build  -j8 && \
