@@ -126,7 +126,6 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
     wstool up &&\
     rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
-    apt-get install ros-melodic-ros-numpy &&\
     rm -rf /var/lib/apt/lists/* &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
     catkin build  -j8 && \
@@ -165,12 +164,12 @@ RUN mkdir -p ${WS_SOURCES} &&\
 RUN cd ${WS_SOURCES} &&\
     git lfs clone https://github.com/hsp-panda/6dof-graspnet.git &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
-    cd 6dof-graspnet/ &&\
+    cd 6dof-graspnet/ 
     # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
     # sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
     # sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
     # sed -i "s/'num_samples'] = 200/'num_samples'] = 20/g" grasp_estimator.py &&\    
-    gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing &&\
+#    gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing &&\
     # cd ../pointnet2/tf_ops/sampling/ &&\
     # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' tf_sampling_compile.sh &&\
     # sed -i "s;with tf.device('/gpu:1');with tf.device('/gpu:0');g" tf_sampling.py &&\
@@ -199,6 +198,7 @@ RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/Ale909/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
+    apt-get install ros-melodic-ros-numpy &&\
     rosdep update &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
     catkin build  -j8 && \
