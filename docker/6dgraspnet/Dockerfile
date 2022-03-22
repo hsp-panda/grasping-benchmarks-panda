@@ -125,6 +125,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     wstool set -y src/geometry2 --git https://github.com/ros/geometry2 -v 0.6.5 &&\
     wstool set -y src/vision_opencv --git https://github.com/ros-perception/vision_opencv -v 1.13.0 &&\
     wstool up &&\
+    apt-get install ros-melodic-ros-numpy &&\
     rosdep update && rosdep install --from-paths src --ignore-src -y -r &&\
     rm -rf /var/lib/apt/lists/* &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release && \
@@ -162,46 +163,31 @@ RUN mkdir -p ${WS_SOURCES} &&\
      apt-get install git-lfs
 
 RUN cd ${WS_SOURCES} &&\
-    git lfs clone https://github.com/NvLabs/6dof-graspnet &&\
-    git clone --branch python3-compatable https://github.com/irfan798/pointnet2.git &&\
+    git lfs clone https://github.com/hsp-panda/6dof-graspnet.git &&\
+    git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
-    sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
-    sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
-    sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
-    sed -i "s/'num_samples'] = 200/'num_samples'] = 20/g" grasp_estimator.py &&\
+    # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
+    # sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
+    # sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
+    # sed -i "s/'num_samples'] = 200/'num_samples'] = 20/g" grasp_estimator.py &&\
     gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing &&\
-    cd ../pointnet2/tf_ops/sampling/ &&\
-    sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' tf_sampling_compile.sh &&\
-    sed -i "s;with tf.device('/gpu:1');with tf.device('/gpu:0');g" tf_sampling.py &&\
-    sed -i "s/import cPickle as pickle/import pickle/g" tf_sampling.py &&\
-    cd ../grouping &&\
-    sed -i "s/print points/print (points)/g" tf_grouping_op_test.py &&\
-    sed -i "s/print grouped_points/print (grouped_points)/g" tf_grouping_op_test.py &&\
-    sed -i 's;print "---- Going to compute gradient error";print ("---- Going to compute gradient error");g' tf_grouping_op_test.py &&\
-    sed -i 's;print err;print (err);g' tf_grouping_op_test.py &&\
-    cd ../3d_interpolation &&\
-    sed -i 's;print points;print (points);g' tf_interpolate_op_test.py &&\
-    sed -i 's;print interpolated_points;print (interpolated_points);g' tf_interpolate_op_test.py &&\
-    sed -i 's;print err;print (err);g' tf_interpolate_op_test.py &&\
-    cd ../../../6dof-graspnet/
+    # cd ../pointnet2/tf_ops/sampling/ &&\
+    # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' tf_sampling_compile.sh &&\
+    # sed -i "s;with tf.device('/gpu:1');with tf.device('/gpu:0');g" tf_sampling.py &&\
+    # sed -i "s/import cPickle as pickle/import pickle/g" tf_sampling.py &&\
+    # cd ../grouping &&\
+    # sed -i "s/print points/print (points)/g" tf_grouping_op_test.py &&\
+    # sed -i "s/print grouped_points/print (grouped_points)/g" tf_grouping_op_test.py &&\
+    # sed -i 's;print "---- Going to compute gradient error";print ("---- Going to compute gradient error");g' tf_grouping_op_test.py &&\
+    # sed -i 's;print err;print (err);g' tf_grouping_op_test.py &&\
+    # cd ../3d_interpolation &&\
+    # sed -i 's;print points;print (points);g' tf_interpolate_op_test.py &&\
+    # sed -i 's;print interpolated_points;print (interpolated_points);g' tf_interpolate_op_test.py &&\
+    # sed -i 's;print err;print (err);g' tf_interpolate_op_test.py &&\
+    # cd ../../../6dof-graspnet/
 #    sh compile_pointnet_tfops.sh
 
 
-#### to delete (graspnet pytorch)#####
-#RUN apt-get update &&\
-#    pip3 install vtk==8.1.0 PyQt5 torch==1.4.0+cu100 \
-#        torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
-#    pip3 install --ignore-installed PyYAML==5.4.1 &&\
-#    rm -rf /var/lib/apt/lists/*
-
-#RUN mkdir -p ${WS_SOURCES} && \
-#    cd ${WS_SOURCES} &&\
-#    git clone https://github.com/jsll/pytorch_6dof-graspnet.git &&\
-#    git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
-#    cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
-#    cd ../pytorch_6dof-graspnet &&\
-#    pip3 install -r requirements.txt &&\
-#    sh checkpoints/download_models.sh
 ###################################
 
 ENV GRASPNET_DIR=${WS_SOURCES}/6dof-graspnet
@@ -214,7 +200,6 @@ RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
-    apt-get install ros-melodic-ros-numpy &&\
     rosdep update &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
     catkin build  -j8 && \
