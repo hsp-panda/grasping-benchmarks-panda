@@ -207,11 +207,12 @@ class GraspingBenchmarksManager(object):
 
             # If we are required to grasp, test the feasibility of the candidates first
             # and send the best grasp between the feasible candidates
+            import ipdb; ipdb.set_trace()
             if req.cmd.data == "grasp":
                 feasible_candidates = self.get_feasible_grasps(reply.grasp_candidates)
                 rospy.loginfo(f"Feasible candidates: {len(feasible_candidates)}/{len(reply.grasp_candidates)}")
                 if not len(feasible_candidates):
-                    return False
+                    return Bool(False)
                 else:
                     return self.execute_grasp(self.get_best_grasp(feasible_candidates))
             else:
@@ -237,7 +238,7 @@ class GraspingBenchmarksManager(object):
         best_candidate = grasps[0]
 
         for grasp in grasps[1:]:
-            if grasp.score > best_candidate.score:
+            if grasp.score.data > best_candidate.score.data:
                 best_candidate = grasp
 
         return best_candidate
