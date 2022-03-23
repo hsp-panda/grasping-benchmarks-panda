@@ -161,7 +161,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 #      pip3 install python-fcl==0.6.1 &&\
 #      pip3 install Rtree==0.9.7   
 
-RUN pip3 install vtk==8.1.0
+
      
 RUN mkdir -p ${WS_SOURCES} &&\
      cd ${WS_SOURCES} &&\
@@ -173,8 +173,7 @@ RUN cd ${WS_SOURCES} &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
     pip3 install -r requirements.txt &&\
-    pip3 install --ignore-installed PyYAML==5.2 &&\
-    pip3 install -r requirements2.txt 
+    pip3 install --ignore-installed PyYAML==5.2 
 
     # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
     # sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
