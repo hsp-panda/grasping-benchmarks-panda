@@ -153,10 +153,10 @@ RUN cd ${WS_SOURCES} &&\
     git lfs clone https://github.com/hsp-panda/6dof-graspnet.git &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
-    pip3 install -r requirements.txt &&\
-    pip3 install --ignore-installed PyYAML==5.2 &&\
+    pip3 install --ignore-installed -r requirements.txt &&\
     gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing 
 #    sh compile_pointnet_tfops.sh
+#    pip3 install --ignore-installed PyYAML==5.2 &&\
 
 
 ###################################
