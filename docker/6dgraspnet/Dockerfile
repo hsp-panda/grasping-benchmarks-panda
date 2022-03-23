@@ -161,7 +161,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 #      pip3 install python-fcl==0.6.1 &&\
 #      pip3 install Rtree==0.9.7   
 
-
+RUN pip3 install vtk==8.1.0
      
 RUN mkdir -p ${WS_SOURCES} &&\
      cd ${WS_SOURCES} &&\
