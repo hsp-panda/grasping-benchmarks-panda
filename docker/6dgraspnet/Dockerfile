@@ -105,6 +105,12 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
     rosdep update &&\
     echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /etc/bash.bashrc
 
+RUN apt-key adv --keyserver keyserver.ubuntu.com \ 
+                --recv-keys 6AF7F09730B3F0A4 &&\
+                apt-get update &&\
+                apt-get install ros-melodic-ros-numpy 
+
+
 
 # Set workspace directories
 # =========================
@@ -198,7 +204,6 @@ RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/Ale909/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
-    apt-get install ros-melodic-ros-numpy &&\
     rosdep update &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
     catkin build  -j8 && \
