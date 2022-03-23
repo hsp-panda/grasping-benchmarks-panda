@@ -142,24 +142,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 
 # Install 6DoFGraspNet and related dependencies
 # =============================================
-# RUN  pip3 install tensorflow-gpu==1.13.1 &&\
-#      pip3 install --upgrade --no-cache-dir gdown &&\
-#      pip3 install opencv-python==4.1.2.30 &&\
-#      pip3 install PyQt5 &&\
-#      pip3 install h5py==2.10.0 &&\
-#      pip3 install tqdm==4.45.0 &&\
-#      pip3 install vtk==8.1.0 &&\
-#      pip3 install mayavi==4.7.1 &&\
-#      pip3 install --ignore-installed PyYAML==5.2 &&\
-#      pip3 install trimesh==3.6.30 &&\
-#      pip3 install numpy==1.17.4 &&\
-#      pip3 install pyrender==0.1.39 &&\
-#      pip3 install matplotlib==3.1.1 &&\
-#      pip3 install easydict==1.9 &&\
-#      pip3 install opencv-python==4.1.2.30 &&\
-#      pip3 install tensorboardX==2.0 &&\
-#      pip3 install python-fcl==0.6.1 &&\
-#      pip3 install Rtree==0.9.7   
+
 
 RUN pip3 install vtk==8.1.0
      
@@ -173,27 +156,8 @@ RUN cd ${WS_SOURCES} &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
     pip3 install -r requirements.txt &&\
-    pip3 install --ignore-installed PyYAML==5.2 
-
-    # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
-    # sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
-    # sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
-    # sed -i "s/'num_samples'] = 200/'num_samples'] = 20/g" grasp_estimator.py &&\    
-#    gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing &&\
-    # cd ../pointnet2/tf_ops/sampling/ &&\
-    # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' tf_sampling_compile.sh &&\
-    # sed -i "s;with tf.device('/gpu:1');with tf.device('/gpu:0');g" tf_sampling.py &&\
-    # sed -i "s/import cPickle as pickle/import pickle/g" tf_sampling.py &&\
-    # cd ../grouping &&\
-    # sed -i "s/print points/print (points)/g" tf_grouping_op_test.py &&\
-    # sed -i "s/print grouped_points/print (grouped_points)/g" tf_grouping_op_test.py &&\
-    # sed -i 's;print "---- Going to compute gradient error";print ("---- Going to compute gradient error");g' tf_grouping_op_test.py &&\
-    # sed -i 's;print err;print (err);g' tf_grouping_op_test.py &&\
-    # cd ../3d_interpolation &&\
-    # sed -i 's;print points;print (points);g' tf_interpolate_op_test.py &&\
-    # sed -i 's;print interpolated_points;print (interpolated_points);g' tf_interpolate_op_test.py &&\
-    # sed -i 's;print err;print (err);g' tf_interpolate_op_test.py &&\
-    # cd ../../../6dof-graspnet/
+    pip3 install --ignore-installed PyYAML==5.2 &&\
+    gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing 
 #    sh compile_pointnet_tfops.sh
 
 
