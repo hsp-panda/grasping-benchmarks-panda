@@ -142,24 +142,24 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 
 # Install 6DoFGraspNet and related dependencies
 # =============================================
-# RUN  pip3 install tensorflow-gpu==1.13.1 &&\
-#      pip3 install --upgrade --no-cache-dir gdown &&\
-#      pip3 install opencv-python==4.1.2.30 &&\
-#      pip3 install PyQt5 &&\
-#      pip3 install h5py==2.10.0 &&\
-#      pip3 install tqdm==4.45.0 &&\
-#      pip3 install vtk==8.1.0 &&\
-#      pip3 install mayavi==4.7.1 &&\
-#      pip3 install --ignore-installed PyYAML==5.2 &&\
-#      pip3 install trimesh==3.6.30 &&\
-#      pip3 install numpy==1.17.4 &&\
-#      pip3 install pyrender==0.1.39 &&\
-#      pip3 install matplotlib==3.1.1 &&\
-#      pip3 install easydict==1.9 &&\
-#      pip3 install opencv-python==4.1.2.30 &&\
-#      pip3 install tensorboardX==2.0 &&\
-#      pip3 install python-fcl==0.6.1 &&\
-#      pip3 install Rtree==0.9.7      
+RUN  pip3 install tensorflow-gpu==1.13.1 &&\
+     pip3 install --upgrade --no-cache-dir gdown &&\
+     pip3 install opencv-python==4.1.2.30 &&\
+     pip3 install PyQt5 &&\
+     pip3 install h5py==2.10.0 &&\
+     pip3 install tqdm==4.45.0 &&\
+     pip3 install vtk==8.1.0 &&\
+     pip3 install mayavi==4.7.1 &&\
+     pip3 install --ignore-installed PyYAML==5.2 &&\
+     pip3 install trimesh==3.6.30 &&\
+     pip3 install numpy==1.17.4 &&\
+     pip3 install pyrender==0.1.39 &&\
+     pip3 install matplotlib==3.1.1 &&\
+     pip3 install easydict==1.9 &&\
+     pip3 install opencv-python==4.1.2.30 &&\
+     pip3 install tensorboardX==2.0 &&\
+     pip3 install python-fcl==0.6.1 &&\
+     pip3 install Rtree==0.9.7      
 
      
 RUN mkdir -p ${WS_SOURCES} &&\
@@ -170,11 +170,7 @@ RUN mkdir -p ${WS_SOURCES} &&\
 RUN cd ${WS_SOURCES} &&\
     git lfs clone https://github.com/hsp-panda/6dof-graspnet.git &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
-    cd 6dof-graspnet/ &&\
-    pip3 install --upgrade --no-cache-dir gdown &&\
-    pip3 install -r requirements.txt &&\
-    pip3 install --ignore-installed PyYAML==5.2 &&\
-    pip3 install -r requirements2.txt
+    cd 6dof-graspnet/
     # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
     # sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
     # sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
