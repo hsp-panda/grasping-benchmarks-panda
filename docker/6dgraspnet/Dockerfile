@@ -58,7 +58,6 @@ RUN apt-get update &&\
     echo "${TZ}" | tee /etc/timezone &&\
     dpkg-reconfigure --frontend noninteractive tzdata
 
-
 # Install python3
 # ===============
 ENV PYTHON_VERSION=3.6
@@ -110,8 +109,6 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
                 apt-get update &&\
                 apt-get install ros-melodic-ros-numpy 
 
-
-
 # Set workspace directories
 # =========================
 ENV WS_DIR=/workspace
@@ -144,7 +141,8 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 # =============================================
 
 
-RUN pip3 install vtk==8.1.0
+RUN pip3 install vtk==8.1.0 &&\
+    pip3 install --upgrade --no-cache-dir gdown==4.4.0
      
 RUN mkdir -p ${WS_SOURCES} &&\
      cd ${WS_SOURCES} &&\
@@ -203,13 +201,3 @@ RUN chmod 755 /usr/sbin/setup.sh
 RUN chmod 755 /usr/sbin/entrypoint.sh
 ENTRYPOINT ["/usr/sbin/entrypoint.sh"]
 CMD ["bash"]
-
-
-
-#RUN sudo find /usr/ -name 'libcuda.so.1'
-#RUN cp /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/local/cuda-10.0/compat/libcuda.so.1
-
-
-#RUN cd ${WS_SOURCES} &&\
-#    cd 6dof-graspnet/ &&\
-#    sh compile_pointnet_tfops.sh
