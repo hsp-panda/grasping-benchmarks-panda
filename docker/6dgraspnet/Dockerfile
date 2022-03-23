@@ -172,8 +172,9 @@ RUN cd ${WS_SOURCES} &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
     pip3 install --upgrade --no-cache-dir gdown &&\
+    pip3 install -r requirements.txt &&\
     pip3 install --ignore-installed PyYAML==5.2 &&\
-    pip3 install -r requirements.txt
+    pip3 install -r requirements2.txt
     # sed -i 's/GOOGLE_CUDA=1/GOOGLE_CUDA=0/g' compile_pointnet_tfops.sh &&\
     # sed -i 's/python/python3/g' compile_pointnet_tfops.sh &&\
     # sed -i "s/'gpu'] = 1/'gpu'] = 0/g" grasp_estimator.py &&\
