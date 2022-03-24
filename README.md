@@ -221,7 +221,7 @@ In case `${ALGORITHM_NAME}-container` already exists (e.g. you simply want to op
 ```
 
 **Only for Graspnet Algorithm** 
-- In your local machine '/home/username/workspace/docker-shared-workspace/name_of_your_docker' copy the dataset folder from  [here](https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_)
+- In your local machine `/home/username/workspace/docker-shared-workspace/name_of_your_docker` copy the dataset folder from  [here](https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_)
 - Copy the dataset folder in your docker: `cd`, `cd workspace-shared/`, `cp -r checkpoints/ ../../../../workspace/sources/6dof-graspnet/`, `cd`, `cd ../../workspace/sources/6dof-graspnet/`  
 - Finally run `sh compile_pointnet_tfops.sh`
 
