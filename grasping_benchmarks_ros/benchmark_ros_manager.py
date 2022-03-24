@@ -329,7 +329,9 @@ class GraspingBenchmarksManager(object):
             self._camera_pose = TransformStamped()
             self._camera_pose.transform.rotation.w = 1.0
 
-        # Get the aruco board transform wrt the root reference frame of this class   
+        # Get the aruco board transform wrt the root reference frame of this class. 
+        # If the aruco board is not found an exception is thrown and   _enable_grasp_filter 
+        # is set false in order to avoid filtering in plan_grasp function in graspnet_grasp_planner.py
         try:
             self._aruco_board_pose = self._tfBuffer.lookup_transform(self._root_reference_frame, self._aruco_reference_frame, rospy.Time(),rospy.Duration(1.0))
             self._enable_grasp_filter = True

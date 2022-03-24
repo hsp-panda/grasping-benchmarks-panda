@@ -33,7 +33,7 @@ class ArucoBoardData:
     enable_grasp_filter = None
 
 
-def transform_grasp_and_offset_to_world(grasping_pose, offset,camera_pose):
+def transform_grasp_and_offset_to_world(grasping_pose:Grasp6D, offset:np.ndarray,camera_pose:CameraData):
     """Transform the 6D grasp pose in the world reference frame, given the
     camera viewpoint
 
@@ -41,13 +41,15 @@ def transform_grasp_and_offset_to_world(grasping_pose, offset,camera_pose):
     ----------
     grasp_pose : grasp_6d
         Candidate grasp pose, in the camera ref frame
+    offset : np.ndarray
+        check point coordinates (x,y,z) w.r.t. the gripper reference frame  
     camera_pose : camera_pose
         Camera pose wrt world ref frame
 
     Returns
     -------
-    PoseStamped
-        Candidate grasp pose, in the world reference frame
+    np.ndarray
+    w_T_grasp affine transformation
     """
 
     # w_T_cam : camera pose in world ref frame
@@ -76,7 +78,23 @@ def transform_grasp_and_offset_to_world(grasping_pose, offset,camera_pose):
 
     return w_T_grasp   
 
-def check_collision_between_gripper_and_table(grasping_pose,camera_pose, aruco_board_data):
+def check_collision_between_gripper_and_table(grasping_pose:Grasp6D,camera_pose:CameraData, aruco_board_data: ArucoBoardData):
+    """Check the collision between the table, which position is identified by ArucoBoard, and the vertices of a cuboid
+    which approximate the gripper
+
+    Parameters
+    ----------
+    grasp_pose : grasp_6d
+        Candidate grasp pose, in the camera ref frame
+    camera_pose : camera_pose
+        Camera pose wrt world ref frame
+    aruco_board_data : aruco_board_data in the world reference frame
+
+    Returns
+    -------
+    PoseStamped
+       True if there are collisions, False if there aren't collisions
+    """
     
     offset_distance = 0.01
     check_points = np.matrix([[0.03, 0.11, -0.13],
@@ -91,6 +109,7 @@ def check_collision_between_gripper_and_table(grasping_pose,camera_pose, aruco_b
     collisions = np.full((1,len(check_points)),True)                         
     
     for i in range(len(check_points)):
+       ###  transform_grasp_and_offset_to_world provides the positions of the vertices of the cuboid in the world reference  
        check_point_in_wrf = transform_grasp_and_offset_to_world(grasping_pose, check_points[i,:],camera_pose)
 
        if i<=3:
@@ -155,7 +174,6 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
 
 
         self.cfg_ns = SimpleNamespace(**self.cfg)
-        print('you are here')
         self.cfg_grasp_estimator = grasp_estimator.joint_config(
             self.cfg_ns.vae_checkpoint_folder,
             self.cfg_ns.evaluator_checkpoint_folder,
@@ -163,7 +181,7 @@ class GraspNetGraspPlanner(BaseGraspPlanner):
         self.cfg_grasp_estimator['threshold'] = self.cfg_ns.threshold
         self.cfg_grasp_estimator['sample_based_improvement'] = 1 - int(self.cfg_ns.gradient_based_refinement)
         self.cfg_grasp_estimator['num_refine_steps'] = 10 if self.cfg_ns.gradient_based_refinement else 20
-        print(self.cfg_grasp_estimator)  
+
 
 
 
