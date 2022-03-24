@@ -161,8 +161,8 @@ ENV GRASPNET_DIR=${WS_SOURCES}/6dof-graspnet
 # # Install benchmark-grasping
 # # ==========================
 
-RUN cd ${CATKIN_WS_DIR}/src &&\
-    git clone https://github.com/Ale909/grasping-benchmarks-panda.git &&\
+RUN cd ${CATKIN_WS_DIR}/src &&\   
+    git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     rosdep update &&\
