@@ -135,8 +135,6 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
     echo 'source ${CATKIN_WS_DIR}/devel/setup.bash' >> /etc/bash.bashrc &&\
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
-
-
 # Install 6DoFGraspNet and related dependencies
 # =============================================
 
@@ -155,10 +153,6 @@ RUN cd ${WS_SOURCES} &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
     pip3 install --ignore-installed -r requirements.txt
-#    gdown --folder https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing
-#    sh compile_pointnet_tfops.sh
-
-
 
 ###################################
 
@@ -186,8 +180,6 @@ RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec
 # Nvidia runtime support
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
-
-
 
 ##############################################
 # Image initialization
