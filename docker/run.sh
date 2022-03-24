@@ -86,6 +86,7 @@ then
         --volume=$XAUTH:$XAUTH:rw \
         --device /dev/dri \
         --gpus=all \
+        --volume=$HOME/workspace/docker-shared-workspace/$CONTAINERNAME:/home/$USERNAME/workspace-shared \
         --network=host \
         --privileged \
         $IMAGENAME \
