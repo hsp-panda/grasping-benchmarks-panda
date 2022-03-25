@@ -36,7 +36,12 @@ from panda_ros_common.srv import PandaGrasp, PandaGraspRequest, PandaGraspRespon
 
 import numpy as np
 
+<<<<<<< HEAD
 NUMBER_OF_CANDIDATES = 10
+=======
+
+NUMBER_OF_CANDIDATES = 1
+>>>>>>> 3343b63eff3953d7486e884c07ef117848a635fc
 
 NEW_MSG = {
 "new_data": False,
@@ -86,10 +91,17 @@ class GraspingBenchmarksManager(object):
         self._depth_msg = None
         self._pc_msg = None
         self._camera_pose = TransformStamped()
+<<<<<<< HEAD
         self._aruco_board_pose = TransformStamped()
         self._root_reference_frame = 'panda_link0'
         self._aruco_reference_frame = 'aruco_board'
         self._enable_grasp_filter = False
+=======
+        self._aruco_board_pose = TransformStamped()
+        self._root_reference_frame = 'panda_link0'
+        self._aruco_reference_frame = 'aruco_board'
+        self._enable_grasp_filter = False
+>>>>>>> 3343b63eff3953d7486e884c07ef117848a635fc
 
         self._seg_msg = NEW_MSG
 
@@ -195,7 +207,11 @@ class GraspingBenchmarksManager(object):
             if self._verbose:
                 print("... send request to server ...")
 
+<<<<<<< HEAD
             # Fill in the arcuo board wrt world reference frame
+=======
+            # Fill in the arcuo board wrt world reference frame
+>>>>>>> 3343b63eff3953d7486e884c07ef117848a635fc
 
             planner_req.aruco_board.position = self._aruco_board_pose.transform.translation
             planner_req.aruco_board.orientation = self._aruco_board_pose.transform.rotation
