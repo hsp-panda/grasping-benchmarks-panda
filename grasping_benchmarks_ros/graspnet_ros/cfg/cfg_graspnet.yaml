@@ -1,16 +1,10 @@
-grasp_sampler_folder: /workspace/sources/pytorch_6dof-graspnet/checkpoints/gan_pretrained/
-grasp_evaluator_folder: /workspace/sources/pytorch_6dof-graspnet/checkpoints/evaluator_pretrained/
-refinement_method: sampling
-refine_steps: 25
-npy_folder: /workspace/sources/pytorch_6dof-graspnet/demo/data/
-input_file_name: cheezit
-threshold: 0.8
-choose_fn: better_than_threshold
-target_pc_size: 1024
-num_grasp_samples: 200
-generate_dense_grasps: False
-batch_size: 30
-train_data: False
+evaluator_checkpoint_folder: /workspace/sources/6dof-graspnet/checkpoints/ACRONYM_Evaluator/
+gradient_based_refinement: False
+npy_folder: /demo/data/
+threshold: -1
+vae_checkpoint_folder: /workspace/sources/6dof-graspnet/checkpoints/ACRONYM_GAN/
+
+
 
 # visualization
 vis:
@@ -35,3 +29,5 @@ vis:
 
 # image pre-processing before input to policy
 inpaint_rescale_factor: 0.5
+
+
