@@ -84,7 +84,6 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
         self._grasp_planning_service = rospy.Service(grasp_service_name, GraspPlanner,
                                             self.plan_grasp_handler)
 
-
     def read_images(self, req : GraspPlannerRequest):
         """Read images as a CameraData class from a service request
 
@@ -157,22 +156,15 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
 
         return camera_data
 
-    def read_aruco_board(self, req : GraspPlannerRequest):
-
-        aruco_board_data = self.create_aruco_board_data(req.aruco_board.position, req.aruco_board.orientation, req.grasp_filter_flag)
-   
-        return aruco_board_data
-
     def plan_grasp_handler(self, req : GraspPlannerRequest) -> GraspPlannerResponse:
 
         # Read camera images from the request
         camera_data = self.read_images(req)
-        aruco_board_data = self.read_aruco_board(req)        
 
         # Set number of candidates
         n_of_candidates = req.n_of_candidates if req.n_of_candidates else 1
 
-        ok = self.plan_grasp(camera_data,aruco_board_data ,n_of_candidates)
+        ok = self.plan_grasp(camera_data, n_of_candidates)
         if ok:
             # Communicate to main thread that we are ready to visu
             visualization_mutex.setReadyState(True)
@@ -315,13 +307,14 @@ class GraspnetGraspPlannerService(GraspNetGraspPlanner):
 
         return response
 
-
     def npy_from_pc2(self, pc : PointCloud2) -> Tuple[np.ndarray, np.ndarray]:
         """Conversion from PointCloud2 to a numpy format
+
         Parameters
         ----------
         pc : PointCloud2
             Scene or object pc
+
         Returns
         -------
         Tuple[np.array, np.array]

@@ -58,6 +58,7 @@ RUN apt-get update &&\
     echo "${TZ}" | tee /etc/timezone &&\
     dpkg-reconfigure --frontend noninteractive tzdata
 
+
 # Install python3
 # ===============
 ENV PYTHON_VERSION=3.6
@@ -104,11 +105,6 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
     rosdep update &&\
     echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /etc/bash.bashrc
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com \
-                --recv-keys 6AF7F09730B3F0A4 &&\
-                apt-get update &&\
-                apt-get install ros-melodic-ros-numpy
-
 # Set workspace directories
 # =========================
 ENV WS_DIR=/workspace
@@ -137,24 +133,22 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 
 # Install 6DoFGraspNet and related dependencies
 # =============================================
+RUN apt-get update &&\
+    pip3 install vtk==8.1.0 PyQt5 torch==1.4.0+cu100 \
+        torchvision==0.5.0+cu100 -f "https://download.pytorch.org/whl/torch_stable.html" &&\
+    pip3 install --ignore-installed PyYAML==5.4.1 &&\
+    rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p ${WS_SOURCES} && \
+    cd ${WS_SOURCES} &&\
+    git clone https://github.com/jsll/pytorch_6dof-graspnet.git &&\
+    git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git &&\
+    cd Pointnet2_PyTorch && pip3 install -r requirements.txt &&\
+    cd ../pytorch_6dof-graspnet &&\
+    pip3 install -r requirements.txt &&\
+    sh checkpoints/download_models.sh
 
-RUN pip3 install vtk==8.1.0 &&\
-    pip3 install --upgrade --no-cache-dir gdown==4.4.0 &&\
-    pip3 install tensorflow-gpu==1.13.1
-RUN mkdir -p ${WS_SOURCES} &&\
-     cd ${WS_SOURCES} &&\
-     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash &&\
-     apt-get install git-lfs
-RUN cd ${WS_SOURCES} &&\
-    git lfs clone https://github.com/hsp-panda/6dof-graspnet.git &&\
-    git clone https://github.com/hsp-panda/pointnet2.git &&\
-    cd 6dof-graspnet/ &&\
-    pip3 install --ignore-installed -r requirements.txt
-
-###################################
-
-ENV GRASPNET_DIR=${WS_SOURCES}/6dof-graspnet
+ENV GRASPNET_DIR=${WS_SOURCES}/pytorch_6dof-graspnet
 
 # # Install benchmark-grasping
 # # ==========================
@@ -164,7 +158,6 @@ RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
-    rosdep update &&\
     catkin config --extend /opt/ros/${ROS_DISTRO} -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_BUILD_TYPE=Release -DGPD_ROS=OFF &&\
     catkin build  -j8 && \
     find ${CATKIN_WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
@@ -179,7 +172,6 @@ RUN find ${WS_DIR} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
-##############################################
 # Image initialization
 # ====================
 ENV USERNAME=docker

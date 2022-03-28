@@ -36,12 +36,7 @@ from panda_ros_common.srv import PandaGrasp, PandaGraspRequest, PandaGraspRespon
 
 import numpy as np
 
-<<<<<<< HEAD
 NUMBER_OF_CANDIDATES = 10
-=======
-
-NUMBER_OF_CANDIDATES = 1
->>>>>>> 3343b63eff3953d7486e884c07ef117848a635fc
 
 NEW_MSG = {
 "new_data": False,
@@ -73,7 +68,6 @@ class GraspingBenchmarksManager(object):
         self._rgb_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         self._depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
         self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
-        # self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
         self._seg_sub = rospy.Subscriber('rgb/image_seg', Image, self.seg_img_callback, queue_size=10)
 
         # --- camera data synchronizer --- #
@@ -91,17 +85,7 @@ class GraspingBenchmarksManager(object):
         self._depth_msg = None
         self._pc_msg = None
         self._camera_pose = TransformStamped()
-<<<<<<< HEAD
-        self._aruco_board_pose = TransformStamped()
         self._root_reference_frame = 'panda_link0'
-        self._aruco_reference_frame = 'aruco_board'
-        self._enable_grasp_filter = False
-=======
-        self._aruco_board_pose = TransformStamped()
-        self._root_reference_frame = 'panda_link0'
-        self._aruco_reference_frame = 'aruco_board'
-        self._enable_grasp_filter = False
->>>>>>> 3343b63eff3953d7486e884c07ef117848a635fc
 
         self._seg_msg = NEW_MSG
 
@@ -206,16 +190,6 @@ class GraspingBenchmarksManager(object):
 
             if self._verbose:
                 print("... send request to server ...")
-
-<<<<<<< HEAD
-            # Fill in the arcuo board wrt world reference frame
-=======
-            # Fill in the arcuo board wrt world reference frame
->>>>>>> 3343b63eff3953d7486e884c07ef117848a635fc
-
-            planner_req.aruco_board.position = self._aruco_board_pose.transform.translation
-            planner_req.aruco_board.orientation = self._aruco_board_pose.transform.rotation
-            planner_req.grasp_filter_flag = self._enable_grasp_filter
 
             # Plan for grasps
             try:
@@ -418,18 +392,6 @@ class GraspingBenchmarksManager(object):
             warnings.warn("tf listener could not get camera pose. Are you publishing camera poses on tf?")
             self._camera_pose = TransformStamped()
             self._camera_pose.transform.rotation.w = 1.0
-
-        # Get the aruco board transform wrt the root reference frame of this class.
-        # If the aruco board is not found an exception is thrown and   _enable_grasp_filter
-        # is set false in order to avoid filtering in plan_grasp function in graspnet_grasp_planner.py
-        try:
-            self._aruco_board_pose = self._tfBuffer.lookup_transform(self._root_reference_frame, self._aruco_reference_frame, rospy.Time(),rospy.Duration(1.0))
-            self._enable_grasp_filter = True
-
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            rospy.logwarn("tf listener could not get aruco board pose. Are you publishing aruco board poses on tf?")
-            self._enable_grasp_filter = False
-
 
     def seg_img_callback(self, data):
         if self._verbose:
