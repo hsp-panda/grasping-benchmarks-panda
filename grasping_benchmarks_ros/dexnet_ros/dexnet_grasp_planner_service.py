@@ -19,11 +19,11 @@ import numpy as np
 import rospy
 
 from autolab_core import YamlConfig
-from autolab_core import CameraIntrinsics,
+from autolab_core import (CameraIntrinsics,
                          ColorImage,
                          DepthImage,
                          BinaryImage,
-                         RgbdImage
+                         RgbdImage)
 from visualization import Visualizer2D as vis
 
 from geometry_msgs.msg import PoseStamped
