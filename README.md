@@ -50,7 +50,7 @@ Follow these instructions if you want to install only the python package without
 
 1. Clone the repository:
     ```bash
-    $ https://github.com/hsp-panda/grasping-benchmarks-panda.git
+    $ git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git
 
     ```
 
