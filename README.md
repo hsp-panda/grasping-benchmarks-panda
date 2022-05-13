@@ -125,7 +125,7 @@ If you don't want to bother with manually setting everything up, we advise using
 
 1. Clone the repository:
     ```bash
-    $ https://github.com/hsp-panda/grasping-benchmarks-panda.git
+    $ git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git
     $ cd grasping-benchmarks-panda/docker
     ```
 
