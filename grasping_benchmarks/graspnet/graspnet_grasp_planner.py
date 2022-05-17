@@ -121,6 +121,17 @@ def check_collision_between_gripper_and_table(grasping_pose:Grasp6D,camera_pose:
     
     true_collisions = np.where(collisions==True)
 
+    is_gripper_in_aruco_work_space = False
+    gripper_pose_in_wrf = transform_grasp_and_offset_to_world(grasping_pose, [0,0,0],camera_pose)
+    
+    if (gripper_pose_in_wrf[0,3]-aruco_board_data.position.x < 0.50):
+        if (gripper_pose_in_wrf[1,3]-aruco_board_data.position.y < 0.70):
+            if (gripper_pose_in_wrf[2,3]-aruco_board_data.position.z < 1.00):
+                is_gripper_in_aruco_work_space == True
+
+    else:
+        is_gripper_in_aruco_work_space == False
+    
     if (true_collisions[0].size == 0):
         return False
     else:
