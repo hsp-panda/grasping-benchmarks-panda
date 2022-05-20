@@ -35,6 +35,7 @@ from grasping_benchmarks_ros.msg import BenchmarkGrasp
 from panda_ros_common.srv import PandaGrasp, PandaGraspRequest, PandaGraspResponse
 
 import numpy as np
+import re
 
 NUMBER_OF_CANDIDATES = 10
 
@@ -67,8 +68,10 @@ class GraspingBenchmarksManager(object):
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
         self._rgb_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         self._depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
-        self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
-        # self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
+        if re.split('_',grasp_planner_service_name)[0]=='6dgraspnet':
+            self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
+        else:    
+            self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
         self._seg_sub = rospy.Subscriber('rgb/image_seg', Image, self.seg_img_callback, queue_size=10)
 
         # --- camera data synchronizer --- #
