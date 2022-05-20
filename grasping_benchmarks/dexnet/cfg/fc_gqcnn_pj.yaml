@@ -25,7 +25,7 @@ policy:
 
   sampling_method: top_k
   num_depth_bins: 16
-  gripper_width: 0.05
+  gripper_width: 0.08
   gqcnn_stride: 4
   gqcnn_recep_h: 96
   gqcnn_recep_w: 96
