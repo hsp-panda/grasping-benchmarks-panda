@@ -68,7 +68,7 @@ class GraspingBenchmarksManager(object):
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
         self._rgb_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         self._depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
-        if re.split('_',grasp_planner_service_name)[0]=='6dgraspnet':
+        if re.split('_',grasp_planner_service_name)[0]=='graspnet':
             self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
         else:    
             self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
