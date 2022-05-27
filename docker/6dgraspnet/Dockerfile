@@ -138,9 +138,7 @@ RUN mkdir -p ${CATKIN_WS_DIR}/src && \
 # Install 6DoFGraspNet and related dependencies
 # =============================================
 
-
 RUN pip3 install vtk==8.1.0 &&\
-    pip3 install --upgrade --no-cache-dir gdown==4.4.0 &&\
     pip3 install tensorflow-gpu==1.13.1
 
 RUN mkdir -p ${WS_SOURCES} &&\
@@ -152,7 +150,8 @@ RUN cd ${WS_SOURCES} &&\
     git lfs clone https://github.com/hsp-panda/6dof-graspnet.git &&\
     git clone https://github.com/hsp-panda/pointnet2.git &&\
     cd 6dof-graspnet/ &&\
-    pip3 install --ignore-installed -r requirements.txt
+    pip3 install --ignore-installed -r requirements.txt &&\
+    tar -xvzf checkpoints.tar.gz
 
 ###################################
 
