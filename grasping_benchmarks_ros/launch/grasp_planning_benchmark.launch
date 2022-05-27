@@ -25,8 +25,7 @@
     <arg name="model_name"                        default="FC-GQCNN-4.0-PJ" if="$(eval fully_conv == true)" />
     <arg name="model_name"                        default="GQCNN-4.0-PJ" if="$(eval fully_conv == false)" />
 
-    <!-- <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.02]" /> -->
-    <arg name="grasp_pose_offset"                 default="[0.0, 0.0, -0.015]" />
+    <arg name="grasp_pose_offset"                 default="[0.0, 0.0, 0.005]" />
 
 
     <node name="dexnet_grasp_planner"  pkg="grasping_benchmarks_ros" type="dexnet_grasp_planner_service.py" ns="$(arg ns)" output="screen" >
