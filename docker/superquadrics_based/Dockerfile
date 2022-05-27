@@ -74,6 +74,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa &&\
         python3-wheel \
         python3-pygments \
         python3-numpy \
+	ros-${ROS_DISTRO}-jsk-tools \
         &&\
     rm -rf /var/lib/apt/lists/*
 

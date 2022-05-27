@@ -98,6 +98,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
         python3-catkin-pkg-modules \
         python3-rospkg-modules \
         python3-empy \
+	ros-${ROS_DISTRO}-jsk-tools \
         &&\
     rm -rf /var/lib/apt/lists/* &&\
     rosdep init &&\
