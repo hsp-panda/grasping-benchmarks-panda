@@ -89,6 +89,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
     apt-get update &&\
     apt-get install -y --no-install-recommends \
         ros-${ROS_DISTRO}-desktop-full \
+	ros-${ROS_DISTRO}-jsk-tools \
         python-rosdep \
         python-rosinstall \
         python-rosinstall-generator \
@@ -98,7 +99,6 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
         python3-catkin-pkg-modules \
         python3-rospkg-modules \
         python3-empy \
-	ros-${ROS_DISTRO}-jsk-tools \
         &&\
     rm -rf /var/lib/apt/lists/* &&\
     rosdep init &&\

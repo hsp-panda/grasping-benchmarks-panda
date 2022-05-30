@@ -73,7 +73,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa &&\
         python3-wheel \
         python3-pygments \
         python3-numpy \
-	ros-${ROS_DISTRO}-jsk-tools \
         &&\
     rm -rf /var/lib/apt/lists/*
 RUN python3 -m pip install --upgrade pip
@@ -91,6 +90,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
     apt-get update &&\
     apt-get install -y --no-install-recommends \
         ros-${ROS_DISTRO}-desktop-full \
+	ros-${ROS_DISTRO}-jsk-tools \
         python-rosdep \
         python-rosinstall \
         python-rosinstall-generator \
