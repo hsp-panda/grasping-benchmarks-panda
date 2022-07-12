@@ -14,7 +14,7 @@ dexnet:
 
 gpd:
 	DOCKER_BUILDKIT=1 docker build --ssh default --rm \
-	    --build-arg from=ghcr.io/hsp-panda/nvidia/cudagl-10.0-cudnn7-devel-ubuntu18.04:latest \
+		--build-arg from=hsp-panda/nvidia/cudagl-10.2-cudnn7-devel-ubuntu18.04:latest \
 	    --tag $(USER_NAME)/benchmark_gpd:latest \
 	    ../gpd/
 

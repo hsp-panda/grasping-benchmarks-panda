@@ -87,7 +87,7 @@ RUN apt-get update &&\
 
 # Install python3
 # ===============
-ENV PYTHON_VERSION=3.6
+ENV PYTHON_VERSION=3.7
 RUN add-apt-repository ppa:deadsnakes/ppa &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends \
@@ -97,8 +97,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa &&\
         python3-pip \
         python3-setuptools \
         python3-wheel \
-        python3-pygments \
-        python3-numpy \
         &&\
     rm -rf /var/lib/apt/lists/*
 
@@ -115,10 +113,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com \
         > /etc/apt/sources.list.d/ros-latest.list &&\
     apt-get update &&\
     apt-get install -y --no-install-recommends \
-        # ros-${ROS_DISTRO}-desktop \
         ros-${ROS_DISTRO}-desktop-full \
-        #ros-${ROS_DISTRO}-fake-localization \
-        #ros-${ROS_DISTRO}-map-server \
         python-rosdep \
         python-rosinstall \
         python-rosinstall-generator \
@@ -174,7 +169,7 @@ RUN cd ${WS_SOURCES}\
     && cd pcl-pcl-1.9.0 \
     && mkdir build \
     && cd build \
-    && cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_GPU=ON -D BUILD_apps=ON -D BUILD_examples=ON  -DCMAKE_INSTALL_PREFIX=${WS_INSTALL} .. \
+    && cmake -D CMAKE_BUILD_TYPE=Release -D BUILD_GPU=OFF -D BUILD_apps=ON -D BUILD_examples=ON  -DCMAKE_INSTALL_PREFIX=${WS_INSTALL} .. \
     && make -j8 \
     && make install \
     && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
@@ -196,36 +191,36 @@ RUN cd ${WS_SOURCES}\
 
 # Install CAFFE
 # =============
-RUN apt-get update &&\
-    apt-get install -y \
-    libprotobuf-dev \
-    libleveldb-dev \
-    libsnappy-dev \
-    libopencv-dev \
-    libhdf5-serial-dev \
-    protobuf-compiler \
-    libboost-all-dev \
-    libatlas-base-dev \
-    liblmdb-dev \
-    libturbojpeg \
-    libturbojpeg0-dev \
-    libgoogle-glog-dev &&\
-    rm -rf /var/lib/apt/lists/* &&\
-    cd ${WS_SOURCES}\
-    && git clone https://github.com/fbottarel/caffe.git &&\
-    cd ${WS_SOURCES}/caffe \
-    && mkdir build \
-    && cd build \
-    && cmake -D BUILD_python=OFF \
-        -D BUILD_python_layer=OFF \
-        -D BLAS=Atlas \
-        -D CUDA_rt_LIBRARY=/usr/local/cuda/lib64/libcudart.so \
-        -D CMAKE_INSTALL_PREFIX=${WS_INSTALL} \
-        ../ \
-    && make -j 8 \
-    && make install \
-    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
-    && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+# RUN apt-get update &&\
+#     apt-get install -y \
+#     libprotobuf-dev \
+#     libleveldb-dev \
+#     libsnappy-dev \
+#     libopencv-dev \
+#     libhdf5-serial-dev \
+#     protobuf-compiler \
+#     libboost-all-dev \
+#     libatlas-base-dev \
+#     liblmdb-dev \
+#     libturbojpeg \
+#     libturbojpeg0-dev \
+#     libgoogle-glog-dev &&\
+#     rm -rf /var/lib/apt/lists/* &&\
+#     cd ${WS_SOURCES}\
+#     && git clone https://github.com/fbottarel/caffe.git &&\
+#     cd ${WS_SOURCES}/caffe \
+#     && mkdir build \
+#     && cd build \
+#     && cmake -D BUILD_python=OFF \
+#         -D BUILD_python_layer=OFF \
+#         -D BLAS=Atlas \
+#         -D CUDA_rt_LIBRARY=/usr/local/cuda/lib64/libcudart.so \
+#         -D CMAKE_INSTALL_PREFIX=${WS_INSTALL} \
+#         ../ \
+#     && make -j 8 \
+#     && make install \
+#     && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
+#     && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Install gpd
 # ===========
@@ -236,13 +231,20 @@ RUN cd ${WS_SOURCES}\
     && cd build \
     && cmake -D CMAKE_BUILD_TYPE=RELEASE \
         -D CMAKE_INSTALL_PREFIX=${WS_INSTALL}\
-        -D USE_CAFFE=ON \
-	-D Caffe_DIR=${WS_INSTALL}/share/Caffe \
+        -D USE_CAFFE=OFF \
         .. \
     && make -j8  \
     && make install \
     && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+ \
     && find ${WS_INSTALL} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
+
+# Install hyperpcr (and dependencies)
+# ===========
+RUN cd ${WS_SOURCES}\
+    && git clone https://github.com/andrearosasco/hyperpcr.git \
+    && pip3 install --upgrade pip \
+    && pip3 install cython==0.29.30 open3d hyperpcr \
+    && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Create catkin_ws with dependencies/ros packages for python3
 # ===========================================================
