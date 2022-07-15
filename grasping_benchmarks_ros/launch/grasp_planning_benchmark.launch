@@ -57,7 +57,7 @@
     <arg name="grasp_planner_service_name"        default="gpd_grasp_planner_service" />
     <arg name="grasp_planner_service"             default="GraspPlannerCloud" />
     <arg name="grasp_publisher_name"              default="candidate_grasp" />
-    <arg name="config_file"                       default="$(find grasping_benchmarks_ros)/gpd_ros/cfg/ros_caffe_params.cfg" />
+    <arg name="config_file"                       default="$(find grasping_benchmarks_ros)/gpd_ros/cfg/ros_eigen_params.cfg" />
     <arg name="publish_rviz"                      default="true" />
     <arg name="grasp_pose_offset"                 default="[0.0, 0.0, 0.05]" />
 

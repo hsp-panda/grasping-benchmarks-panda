@@ -44,6 +44,8 @@ NEW_MSG = {
 "data": {},
 }
 
+from shape_completion import complete_point_cloud
+
 class GraspingBenchmarksManager(object):
     def __init__(self, grasp_planner_service_name, grasp_planner_service, user_cmd_service_name, panda_service_name, verbose=False):
 
@@ -68,10 +70,15 @@ class GraspingBenchmarksManager(object):
         self._cam_info_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/camera_info', CameraInfo)
         self._rgb_sub = message_filters.Subscriber('/camera/color/image_raw', Image)
         self._depth_sub = message_filters.Subscriber('/camera/aligned_depth_to_color/image_raw', Image)
-        if re.split('_',grasp_planner_service_name)[0]=='graspnet':
+        try:
+            rospy.wait_for_message('/objects_cloud', PointCloud2, 1)
             self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
-        else:    
+        except rospy.exceptions.ROSException:
             self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
+        # if re.split('_',grasp_planner_service_name)[0]=='gpd':
+        #     self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
+        # else:
+        #     self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
         self._seg_sub = rospy.Subscriber('rgb/image_seg', Image, self.seg_img_callback, queue_size=10)
 
         # --- camera data synchronizer --- #
@@ -177,7 +184,7 @@ class GraspingBenchmarksManager(object):
                                 transform.translation.y,
                                 transform.translation.z]
             points=[]
-            for p_in in read_points(pc_in, skip_nans=False, field_names=("x", "y", "z", "rgb")):
+            for p_in in read_points(pc_in, skip_nans=True, field_names=("x", "y", "z", "rgb")):
                 p_transformed = np.dot(tr_matrix, np.array([p_in[0], p_in[1], p_in[2], 1.0]))
                 p_out=[]
                 p_out.append(p_transformed[0])
@@ -185,6 +192,18 @@ class GraspingBenchmarksManager(object):
                 p_out.append(p_transformed[2])
                 p_out.append(p_in[3])
                 points.append(p_out)
+
+            # Completing shape (in camera reference frame)
+            np_partial_pc = self.transform_pc_to_frame(np.asarray(points)[:,:3], tr_matrix)
+
+            np_completed_pc = complete_point_cloud(np_partial_pc)
+            np_completed_pc = self.transform_pc_to_frame(np_completed_pc, np.linalg.inv(tr_matrix))
+            np_points_complete = np.ones((np_completed_pc.shape[0], 4))*points[0][3]
+            np_points_complete[:,:3] = np_completed_pc
+
+            points = []
+            for point in np_points_complete:
+                points.append(list(point))
 
             header = pc_in.header
             header.frame_id = self._camera_pose.header.frame_id
@@ -423,6 +442,39 @@ class GraspingBenchmarksManager(object):
 
         self._seg_msg['data'] = data
         self._seg_msg['new_data'] = True
+
+    # ------------------- #
+    # Camera data handler #
+    # ------------------- #
+    def transform_pc_to_frame(self, pc : np.ndarray, target : np.ndarray) -> np.ndarray:
+        """Transform the point cloud to target reference frame
+
+        Parameters
+        ----------
+        pc : np.ndarray
+            nx3, float64 array of points
+        target_frame : np.ndarray
+            4x4 affine transformation
+
+        Returns
+        -------
+        np.ndarray
+            nx3, float64 array of points
+        """
+
+        # [F]_p         : point p in reference frame F
+        # [F]_T_[f]     : frame f in reference frame F
+        # r             : root ref frame
+        # target        : target ref frame
+        # p, pc         : point, point cloud (points as rows)
+        # tr(r_pc) = r_T_cam * tr(cam_pc)
+        # tr(cam_pc) = inv(r_T_cam) * tr(r_pc)
+
+        r_pc = np.c_[pc, np.ones(pc.shape[0])]
+        target_T_r = np.linalg.inv(target)
+        target_pc = np.transpose(np.dot(target_T_r, np.transpose(r_pc)))
+
+        return target_pc[:, :-1]
 
 
 if __name__ == "__main__":
