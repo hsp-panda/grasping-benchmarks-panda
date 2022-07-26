@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from pathlib import Path
 
 from open3d.cuda.pybind.geometry import PointCloud
 from open3d.cuda.pybind.utility import Vector3dVector
@@ -27,6 +28,17 @@ def complete_point_cloud(partial_pc):
 
     complete = complete.squeeze(0).cpu().numpy()
     partial = partial.squeeze(0).cpu().numpy()
+    probabilities = probabilities.squeeze(0).cpu().numpy()
+
+    # import ipdb; ipdb.set_trace()
+
+    root = Path('/home/panda-user')
+    pc_dir =  (root / 'points')
+    pc_dir.mkdir(exist_ok=True)
+
+    i = len(list(pc_dir.glob('*')))
+    np.save(pc_dir / f'reconstruction_{i}', np.concatenate([complete, probabilities[..., np.newaxis]], axis=1))
+    np.save(pc_dir / f'partial_{i}', partial)
 
     # Return the point cloud in its original reference frame
     complete = Denormalize(Config.Processing)(complete, ctx)

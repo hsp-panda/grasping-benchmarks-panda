@@ -45,6 +45,10 @@ NEW_MSG = {
 }
 
 from shape_completion import complete_point_cloud
+# import sys
+# sys.path.append('/workspace/sources/shape_completion_network')
+# from shape_completion_lundell import *
+
 
 class GraspingBenchmarksManager(object):
     def __init__(self, grasp_planner_service_name, grasp_planner_service, user_cmd_service_name, panda_service_name, verbose=False):
@@ -197,6 +201,7 @@ class GraspingBenchmarksManager(object):
             np_partial_pc = self.transform_pc_to_frame(np.asarray(points)[:,:3], tr_matrix)
 
             np_completed_pc = complete_point_cloud(np_partial_pc)
+            # np_completed_pc = complete_point_cloud_lundell(np_partial_pc)
             np_completed_pc = self.transform_pc_to_frame(np_completed_pc, np.linalg.inv(tr_matrix))
             np_points_complete = np.ones((np_completed_pc.shape[0], 4))*points[0][3]
             np_points_complete[:,:3] = np_completed_pc
