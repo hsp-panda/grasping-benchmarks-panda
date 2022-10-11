@@ -37,7 +37,7 @@ from panda_ros_common.srv import PandaGrasp, PandaGraspRequest, PandaGraspRespon
 import numpy as np
 import re
 
-NUMBER_OF_CANDIDATES = 10
+NUMBER_OF_CANDIDATES = 5
 
 NEW_MSG = {
 "new_data": False,
