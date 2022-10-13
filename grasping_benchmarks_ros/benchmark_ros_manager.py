@@ -77,16 +77,17 @@ class GraspingBenchmarksManager(object):
         try:
             rospy.wait_for_message('/objects_cloud', PointCloud2, 1)
             self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
+            rospy.wait_for_message('/plane_cloud', PointCloud2, 1)
+            self._background_pc_sub = message_filters.Subscriber('/plane_cloud', PointCloud2)
         except rospy.exceptions.ROSException:
             self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
-        # if re.split('_',grasp_planner_service_name)[0]=='gpd':
-        #     self._pc_sub = message_filters.Subscriber('/objects_cloud', PointCloud2)
-        # else:
-        #     self._pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
+            # If there is no segmentation node, there is no foreground/background separation
+            self._background_pc_sub = message_filters.Subscriber('/camera/depth_registered/points', PointCloud2)
+
         self._seg_sub = rospy.Subscriber('rgb/image_seg', Image, self.seg_img_callback, queue_size=10)
 
         # --- camera data synchronizer --- #
-        self._tss = message_filters.ApproximateTimeSynchronizer([self._cam_info_sub, self._rgb_sub, self._depth_sub, self._pc_sub],
+        self._tss = message_filters.ApproximateTimeSynchronizer([self._cam_info_sub, self._rgb_sub, self._depth_sub, self._pc_sub, self._background_pc_sub],
                                                                 queue_size=1, slop=0.5)
         self._tss.registerCallback(self._camera_data_callback)
 
@@ -99,6 +100,7 @@ class GraspingBenchmarksManager(object):
         self._rgb_msg = None
         self._depth_msg = None
         self._pc_msg = None
+        self._background_pc_msg = None
         self._camera_pose = TransformStamped()
         self._aruco_board_pose = TransformStamped()
         self._root_reference_frame = 'panda_link0'
@@ -179,6 +181,7 @@ class GraspingBenchmarksManager(object):
             # Transform the point cloud in the root reference frame and include it
             transform = self._camera_pose.transform
             pc_in = self._pc_msg
+            background_pc_in = self._background_pc_msg
             tr_matrix = np.identity(4)
             tr_matrix[:3, :3] = quaternion_to_matrix([transform.rotation.x,
                                                     transform.rotation.y,
@@ -209,6 +212,22 @@ class GraspingBenchmarksManager(object):
             points = []
             for point in np_points_complete:
                 points.append(list(point))
+
+            # If a background PC is present, include it in the completed output point cloud
+            # Otherwise, the completed PC will not have any background in it
+            if background_pc_in is not None:
+                background_points = []
+                for p_back in read_points(background_pc_in, skip_nans=True, field_names=("x", "y", "z", "rgb")):
+                    p_tmp = []
+                    p_tmp.append(p_back[0])
+                    p_tmp.append(p_back[1])
+                    p_tmp.append(p_back[2])
+                    p_tmp.append(p_back[3])
+                    background_points.append(p_tmp)
+                background_points_arr = np.asarray(background_points)
+                background_points_arr[:,:3] = self.transform_pc_to_frame(background_points_arr[:,:3], np.linalg.inv(tr_matrix))
+                for point in background_points_arr:
+                    points.append(list(point))
 
             header = pc_in.header
             header.frame_id = self._camera_pose.header.frame_id
@@ -412,12 +431,16 @@ class GraspingBenchmarksManager(object):
     # ------------------- #
     # Camera data handler #
     # ------------------- #
-    def _camera_data_callback(self, cam_info, rgb, depth, pc):
+    def _camera_data_callback(self, cam_info, rgb, depth, pc, background_pc):
 
         self._cam_info_msg = cam_info
         self._rgb_msg = rgb
         self._depth_msg = depth
         self._pc_msg = pc
+        if pc != background_pc:
+            self._background_pc_msg = background_pc
+        else:
+            self._background_pc_msg = None
 
         self._new_camera_data = True
 
