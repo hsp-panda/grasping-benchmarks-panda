@@ -29,3 +29,9 @@ superquadrics:
 		--build-arg from=ghcr.io/hsp-panda/nvidia/cudagl-10.0-cudnn7-devel-ubuntu18.04:latest \
 		--tag $(USER_NAME)/benchmark_6dgraspnet:latest \
 		../6dgraspnet/
+
+contactgraspnet:
+	docker build --rm \
+		--build-arg from=ghcr.io/hsp-panda/nvidia/cudagl-10.1-cudnn7-devel-ubuntu18.04:latest \
+		--tag $(USER_NAME)/benchmark_contactgraspnet:latest \
+		../contactgraspnet/
