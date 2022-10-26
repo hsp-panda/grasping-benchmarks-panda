@@ -163,7 +163,7 @@ ENV GRASPNET_DIR=${WS_SOURCES}/6dof-graspnet
 
 RUN cd ${CATKIN_WS_DIR}/src &&\
     git clone https://github.com/hsp-panda/panda_ros_common &&\
-    git clone https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
+    git clone -b fc_grasp_demo https://github.com/hsp-panda/grasping-benchmarks-panda.git &&\
     pip3 install grasping-benchmarks-panda/ &&\
     cd ${CATKIN_WS_DIR} &&\
     rosdep update &&\
