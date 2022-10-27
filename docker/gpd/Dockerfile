@@ -246,7 +246,7 @@ RUN cd ${WS_SOURCES}\
 RUN cd ${WS_SOURCES}\
     && git clone https://github.com/andrearosasco/hyperpcr.git \
     && pip3 install --upgrade pip \
-#    && pip3 install --ignore-installed open3d hyperpcr \
+    && pip3 install --ignore-installed open3d hyperpcr \
     && find ${WS_SOURCES} -not -group runtimeusers -exec chgrp runtimeusers {} \; -exec chmod g+rw {} \+
 
 # Create catkin_ws with dependencies/ros packages for python3
